@@ -1,7 +1,7 @@
 package main
 
 import "os"
-import "pkg"
+import "github.com/moovweb/gpkg/pkg"
 
 func main() {
 	wd, _ := os.Getwd()
