@@ -1,3 +1,3 @@
 #gpkg
 
-gpkg is the package manager for gvm.
+gpkg is the package manager for http://github.com/moovweb/gvm.
