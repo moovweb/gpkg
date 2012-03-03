@@ -1,20 +1,53 @@
 package main
 
 import "os"
-import "github.com/moovweb/gpkg/pkg"
+import "flag"
+
+type GpkgApp struct {
+	command string
+}
+
+func showCommands() {
+	println("Please choose a command:")
+	println("  Choices are: build, graph, install, uninstall")
+	os.Exit(1)
+}
+
+func New() (g *GpkgApp) {
+	g = &GpkgApp{}
+	g.readArgs()
+	return
+}
+
+func (g *GpkgApp) readArgs() {
+	if len(os.Args) > 1 {
+		g.command = os.Args[1]
+		if g.command != "build" && g.command != "graph" && g.command != "install" && g.command != "uninstall" {
+			showCommands()
+		}
+		os.Args = os.Args[1:]
+	} else {
+		showCommands()
+	}
+
+	flag.Parse()
+}
+
+func (g *GpkgApp) start() {
+	if g.command == "build" {
+		g.build()
+	} else if g.command == "install" {
+		g.install()
+	} else if g.command == "uninstall" {
+		g.uninstall()
+	} else if g.command == "list" {
+		g.list()
+	} else if g.command == "graph" {
+		g.graph()
+	}
+}
 
 func main() {
-	wd, _ := os.Getwd()
-	p := pkg.NewPackage(wd)
-	println()
-	println("Commands")
-	for _, cmd := range p.Commands {
-		println("  ", cmd)
-	}
-	println()
-	println("Packages")
-	for _, pkg := range p.Packages {
-		println("  ", pkg)
-	}
-	println()
+	g := New()
+	g.start()
 }
