@@ -4,6 +4,8 @@ import "os"
 import "pkg"
 import "path"
 import "path/filepath"
+import "strings"
+import "fmt"
 
 func findImport(name string, packages[] string) bool {
 	for _, base_pkg := range packages {
@@ -22,23 +24,14 @@ func (g *GpkgApp) graph() {
 
 	wd, _ := os.Getwd()
 	p := pkg.NewPackage(wd, path.Base(wd))
-	println("==", path.Base(wd), "==")
-	println()
-	println("Commands")
-	for _, cmd := range p.Commands {
-		println("  ", cmd)
-	}
-	println()
-	println("Packages")
-	for _, pkg := range p.Packages {
-		println("  ", pkg)
-	}
-	println()
-	println("Imports")
+	dep := make(map[string]string, 256)
 	for _, imp := range p.Imports {
-		if !findImport(imp, base_pkgs.Packages) && !findImport(imp, p.Packages) {
-			println("  ", imp)
+		if !findImport(imp, base_pkgs.Packages) && !findImport(imp, p.Packages) && path.Base(wd) != imp {
+			dep[strings.Split(imp, "/")[0]] = strings.Split(imp, "/")[0]
 		}
 	}
-	println()
+
+	for _, str := range dep {
+		fmt.Print(path.Base(wd), "->", str + ";")
+	}
 }
