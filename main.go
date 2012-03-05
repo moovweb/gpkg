@@ -26,7 +26,12 @@ func main() {
 		if pkgname == "" {
 			logger.Fatal("Please specify package name")
 		}
-		gvm.InstallPackage(pkgname)
+		version := readCommand()
+		if version == "" {
+			gvm.InstallPackage(pkgname)
+		} else {
+			gvm.InstallPackageByVersion(pkgname, version)
+		}
 	} else if command == "list" {
 		logger.Info("\ngvm packages", gvm.go_name + "@" + gvm.pkgset_name, "\n")
 		pkgs := gvm.PackageList()

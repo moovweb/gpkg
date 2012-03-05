@@ -16,9 +16,9 @@ type Package struct {
 	src string
 	tmpdir string
 	tmpimp string
-
 	tmpsrc string
 	logger *Logger
+	deps map[string]*Package
 }
 
 func (p *Package) FindSource() bool {
@@ -67,6 +67,18 @@ func (p *Package) Get() bool {
 		}
 	}
 
+	if p.version != "" {
+		p.logger.Debug(" * Checking out ", p.version)
+		err := os.Chdir(p.tmpsrc + "/" + p.name)
+		if err != nil {
+			p.logger.Fatal("Unable to chdir to checkout version", p.version, "of", p.name)
+		}
+		_, err = exec.Command("git", "checkout", p.version).CombinedOutput()
+		if err != nil {
+			p.logger.Fatal("Invalid version of", p.name, "specified")
+		}
+	}
+
 	if p.version == "" {
 		v, err := ioutil.ReadFile(filepath.Join(p.tmpsrc, p.name, "VERSION"))
 		if err == nil {
@@ -88,35 +100,59 @@ func (p *Package) Get() bool {
 	return true
 }
 
-func (p *Package) LoadImports() bool {
-	data, err := ioutil.ReadFile(filepath.Join(p.src, p.name, "Package.gvm"))
-	if err == nil {
-		p.logger.Debug(" * Loading deps for", p.name)
-		for _, line := range strings.Split(string(data), "\n") {
-			if len(line) > 3 && line[0:3] == "pkg" {
-				params := strings.Split(line, " ")
-				var dep *Package
-				if len(params) > 2 {
-					dep = p.gvm.FindPackageByVersion(params[1], params[2])
-					if dep == nil {
-						dep = p.gvm.InstallPackageByVersion(params[1], params[2])
-					}
-				} else {
-					dep = p.gvm.FindPackage(params[1])
-					if dep == nil {
-						dep = p.gvm.InstallPackage(params[1])
-					}
-				}
-				if dep == nil {
-					p.logger.Fatal("ERROR: Couldn't find " + params[1] + " in any sources")
-				}
+func (p *Package) LoadImport(dep *Package) {
+	//p.logger.Trace("dep", fmt.Sprint(dep))
+	if p.deps[dep.name] != nil {
+		if p.deps[dep.name].version != dep.version {
+			p.logger.Error("Version conflict!")
+			p.logger.Fatal(dep.name, "version:", p.deps[dep.name].version, "Imported already for", p.name)
+		}
+	} else {
+		for _, subdep := range dep.deps {
+			p.LoadImport(subdep)
+		}
+		p.deps[dep.name] = dep
+	}
 
-				os.MkdirAll(p.tmpimp, 0775)
-				err = FileCopy(filepath.Join(dep.root, dep.version, "pkg"), p.tmpimp)
-				if err != nil {
-					p.logger.Fatal("ERROR: Couldn't load import: " + dep.name)
+	//p.deps += "pkg " + dep.name + " " + dep.version + "\n"
+	os.MkdirAll(p.tmpimp, 0775)
+	err := FileCopy(filepath.Join(dep.root, dep.version, "pkg"), p.tmpimp)
+	if err != nil {
+		p.logger.Fatal("ERROR: Couldn't load import: " + dep.name)
+	}
+}
+
+func (p *Package) LoadImports() bool {
+	data, err := ioutil.ReadFile(filepath.Join(p.src, p.name, "manifest"))
+	if err != nil {
+		data, err = ioutil.ReadFile(filepath.Join(p.src, p.name, "Package.gvm"))
+		if err != nil {
+			return true
+		}
+	}
+
+	p.deps = make(map[string]*Package, 64)
+
+	p.logger.Debug(" * Loading deps for", p.name)
+	for _, line := range strings.Split(string(data), "\n") {
+		if len(line) > 3 && line[0:3] == "pkg" {
+			params := strings.Split(line, " ")
+			var dep *Package
+			if len(params) > 2 {
+				dep = p.gvm.FindPackageByVersion(params[1], params[2])
+				if dep == nil {
+					dep = p.gvm.InstallPackageByVersion(params[1], params[2])
+				}
+			} else {
+				dep = p.gvm.FindPackage(params[1])
+				if dep == nil {
+					dep = p.gvm.InstallPackage(params[1])
 				}
 			}
+			if dep == nil {
+				p.logger.Fatal("ERROR: Couldn't find " + params[1] + " in any sources")
+			}
+			p.LoadImport(dep)
 		}
 	}
 	return true
@@ -147,6 +183,7 @@ func (p *Package) Build() bool {
 
 	p.logger.Info("Installing", p.name + "-" + p.version + "...")
 
+	//ioutil.WriteFile(filepath.Join(p.root, p.version, "manifest"), []byte(p.deps), 0664)
 	err = FileCopy(filepath.Join(p.tmpdir, "pkg"), filepath.Join(p.root, p.version, "pkg"))
 	if err != nil {
 		return false
@@ -161,7 +198,7 @@ func (p *Package) Build() bool {
 }
 
 func (p *Package) Install() {
-	p.logger.Debug("Starting install of", p.name)
+	p.logger.Debug("Starting install of", p.name, p.version)
 	if !p.FindSource() {
 		p.logger.Fatal("ERROR Finding package")
 	}

@@ -51,25 +51,31 @@ func (gvm *Gvm) InstallPackageByVersion(name string, version string) *Package {
 }
 
 func (gvm *Gvm) InstallPackage(name string) *Package {
+	gvm.logger.Trace("name", name)
 	p := gvm.NewPackage(name, "")
 	p.Install()
 	return p
 }
 
 func (gvm *Gvm) FindPackageByVersion(name string, version string) *Package {
+	gvm.logger.Trace("name", name)
+	gvm.logger.Trace("version", version)
 	_, err := os.Open(filepath.Join(gvm.pkgset_root, "pkg.gvm", name, version, "pkg"))
 	if err == nil {
-		return gvm.NewPackage(name, version)
+		p := gvm.NewPackage(name, version)
+		return p
 	}
 	return nil
 }
 
 func (gvm *Gvm) FindPackage(name string) *Package {
+	gvm.logger.Trace("name", name)
 	_, err := os.Open(filepath.Join(gvm.pkgset_root, "pkg.gvm", name))
 	if err == nil {
 		verions, _ := ioutil.ReadDir(filepath.Join(gvm.pkgset_root, "pkg.gvm", name))
 		for _, version := range verions {
-			return gvm.NewPackage(name, version.Name)
+			p := gvm.NewPackage(name, version.Name)
+			return p
 		}
 		os.Exit(1)
 	}
