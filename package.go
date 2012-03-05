@@ -9,34 +9,18 @@ import "fmt"
 
 type Package struct {
 	gvm *Gvm
-	root string
+	logger *Logger
+	g *Go
+	pkgset *Pkgset
+
 	name string
+
+	root string
 	version string
 	source string
 	src string
 	tmpdir string
 	tmpimp string
-	logger *Logger
-}
-
-func (p *Package) FindSource() bool {
-	for _, source := range p.gvm.sources {
-		src := source + "/" + p.name
-		if src[0] == '/' {
-			_, err := os.Open(src)
-			if err == nil {
-				p.source = src
-				return true
-			}
-		} else {
-			_, err := exec.Command("git", "ls-remote", src).CombinedOutput()
-			if err == nil {
-				p.source = src
-				return true
-			}
-		}
-	}
-	return false
 }
 
 func (p *Package) Get() bool {
@@ -65,9 +49,9 @@ func (p *Package) LoadImports() bool {
 		for _, line := range strings.Split(string(data), "\n") {
 			if len(line) > 3 && line[0:3] == "pkg" {
 				params := strings.Split(line, " ")
-				dep := p.gvm.FindPackageByVersion(params[1], "0.0.src")
+				dep := p.pkgset.FindPackageByVersion(params[1], "0.0.src")
 				if dep == nil {
-					dep = p.gvm.InstallPackage(params[1], "0.0.src")
+					dep = p.pkgset.InstallPackage(params[1], "0.0.src")
 				}
 				if dep == nil {
 					p.logger.Fatal("ERROR: Couldn't find " + params[1] + " in any sources")
@@ -85,8 +69,8 @@ func (p *Package) LoadImports() bool {
 }
 
 func (p *Package) Build() bool {
-	p.tmpdir = fmt.Sprintf("%s/tmp/%s-%d/%s", p.gvm.root, p.name, os.Getpid(), "build")
-	p.tmpimp = fmt.Sprintf("%s/tmp/%s-%d/%s", p.gvm.root, p.name, os.Getpid(), "import")
+	p.tmpdir = fmt.Sprintf("%s/tmp/%s-%d/%s", p.pkgset.root, p.name, os.Getpid(), "build")
+	p.tmpimp = fmt.Sprintf("%s/tmp/%s-%d/%s", p.pkgset.root, p.name, os.Getpid(), "import")
 
 	if !p.LoadImports() {
 		p.logger.Error("Failed to load imports")
@@ -115,7 +99,7 @@ func (p *Package) Build() bool {
 		return false
 	}
 
-	err = FileCopy(filepath.Join(p.tmpdir, "bin"), filepath.Join(p.gvm.pkgset_root))
+	err = FileCopy(filepath.Join(p.tmpdir, "bin"), filepath.Join(p.pkgset.root))
 	if err == nil {
 		p.logger.Debug(" * Installed binaries")
 	}
@@ -125,9 +109,6 @@ func (p *Package) Build() bool {
 
 func (p *Package) Install() {
 	p.logger.Debug("Starting install of", p.name)
-	if !p.FindSource() {
-		p.logger.Fatal("ERROR Finding package")
-	}
 	if !p.Get() {
 		p.logger.Fatal("ERROR Getting package source")
 	}

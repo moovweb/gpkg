@@ -26,9 +26,9 @@ func main() {
 		if pkgname == "" {
 			logger.Fatal("Please specify package name")
 		}
-		gvm.InstallPackage(pkgname, "0.0.src")
+		gvm.g.pkgset.InstallPackage(pkgname, "0.0.src")
 	} else if command == "list" {
-		pkgs := gvm.PackageList()
+		pkgs := gvm.g.pkgset.PackageList()
 		for _, pkg := range pkgs {
 			logger.Info(pkg.name, "(" + pkg.version + ")")
 		}
