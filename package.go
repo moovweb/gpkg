@@ -230,8 +230,10 @@ func (p *Package) Build() bool {
 
 func (p *Package) Install() {
 	p.logger.Debug("Starting install of", p.name, p.version)
-	if !p.FindSource() {
-		p.logger.Fatal("ERROR Finding package")
+	if p.source == "" {
+		if !p.FindSource() {
+			p.logger.Fatal("ERROR Finding package")
+		}
 	}
 	if !p.Get() {
 		p.logger.Fatal("ERROR Getting package source")
