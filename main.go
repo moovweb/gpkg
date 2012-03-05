@@ -2,7 +2,12 @@ package main
 
 import "exec"
 import "os"
-import "flag"
+import "path/filepath"
+
+type Gpkg struct {
+	gvm *Gvm
+	logger *Logger
+}
 
 func FileCopy(src string, dst string) (err os.Error) {
 	_, err = exec.Command("cp", "-r", src, dst).CombinedOutput()
@@ -17,70 +22,37 @@ func readCommand() string {
 	return os.Args[0]
 }
 
+func (gpkg *Gpkg) NewGvm() *Gvm {
+	gpkg.gvm = &Gvm{logger: gpkg.logger}
+	gpkg.gvm.root = os.Getenv("GVM_ROOT")
+	gpkg.gvm.go_name = os.Getenv("gvm_go_name")
+	gpkg.gvm.go_root = filepath.Join(gpkg.gvm.root, "gos", gpkg.gvm.go_name)
+	gpkg.gvm.pkgset_name = os.Getenv("gvm_pkgset_name")
+	gpkg.gvm.pkgset_root = filepath.Join(gpkg.gvm.root, "pkgsets", gpkg.gvm.go_name, gpkg.gvm.pkgset_name)
+
+	if !gpkg.gvm.ReadSources() {
+		gpkg.gvm.logger.Fatal("Failed to read source list")
+	}
+
+	return gpkg.gvm
+}
+
 func main() {
-	command := readCommand()
 	logger := NewLogger("", INFO)
-	gvm := NewGvm(logger)
+	gpkg := &Gpkg{logger: logger}
+	gpkg.NewGvm()
+	command := readCommand()
 
 	if command == "install" {
-		pkgname := readCommand()
-		if pkgname == "" {
-			logger.Fatal("Please specify package name")
-		}
-		version := flag.String("version", "", "Package version to install")
-		flag.Parse()
-		if *version == "" {
-			gvm.InstallPackage(pkgname)
-		} else {
-			gvm.InstallPackageByVersion(pkgname, *version)
-		}
+		gpkg.install()
 	} else if command == "uninstall" {
-		pkgname := readCommand()
-		if pkgname == "" {
-			logger.Fatal("Please specify package name")
-		}
-		version := flag.String("version", "", "Package version to install")
-		flag.Parse()
-		if *version == "" {
-			p := gvm.FindPackage(pkgname)
-			if p != nil {
-				if gvm.DeletePackages(p.name) {
-					logger.Message("Deleted", p.name)
-				} else {
-					logger.Fatal("Couldn't delete", p.name)
-				}
-			} else {
-				logger.Fatal("Invalid package name")
-			}
-		} else {
-			p := gvm.FindPackageByVersion(pkgname, *version)
-			if p != nil {
-				if gvm.DeletePackage(p) {
-					logger.Message("Deleted", p.name, "version", p.version)
-				} else {
-					logger.Fatal("Couldn't delete", p.name, "version", p.version)
-				}
-			} else {
-				logger.Fatal("Invalid package version")
-			}
-		}
+		gpkg.uninstall()
 	} else if command == "list" {
-		logger.Message("\ngpkg list", gvm.go_name + "@" + gvm.pkgset_name, "\n")
-		pkgs := gvm.PackageList()
-		for _, pkg := range pkgs {
-			versions := pkg.GetVersions()
-			version_str := ""
-			for n, version := range versions {
-				version_str += version
-				if n < len(versions) - 1 {
-					version_str += ", "
-				}
-			}
-			logger.Info(pkg.name, "(" + version_str + ")")
-		}
-		logger.Info()
+		gpkg.list()
+	} else if command == "sources" {
+		gpkg.sources()
 	} else if command == "graph" {
-		graph()
+		gpkg.graph()
 	} else {
 		logger.Fatal("Invalid command. Please use: list, install or uninstall")
 	}

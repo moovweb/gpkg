@@ -23,7 +23,7 @@ type Package struct {
 
 func (p *Package) FindSource() bool {
 	for _, source := range p.gvm.sources {
-		src := source + "/" + p.name
+		src := source.root + "/" + p.name
 		if src[0] == '/' {
 			_, err := os.Open(src)
 			if err == nil {
@@ -84,7 +84,8 @@ func (p *Package) Get() bool {
 		if err == nil {
 			p.version = strings.TrimSpace(string(v))
 		} else {
-			p.version = "0.0"
+			//p.version = "0.0"
+			p.version = ""
 		}
 		if os.Getenv("BUILD_NUMBER") != "" {
 			p.version += "." + os.Getenv("BUILD_NUMBER")
@@ -94,7 +95,11 @@ func (p *Package) Get() bool {
 			if err == nil {
 				p.version = strings.TrimSpace(string(out))
 			} else {
-				p.version += ".src"
+				if p.version != "" {
+					p.version += ".src"
+				} else {
+					p.version = "src"
+				}
 			}
 		}
 	}	
@@ -179,12 +184,23 @@ func (p *Package) Build() bool {
 	os.Setenv("GOPATH", p.tmpdir + ":" + p.tmpimp)
 	old_build_number := os.Getenv("BUILD_NUMBER")	
 	os.Setenv("BUILD_NUMBER", p.version)
-	out, err := exec.Command("make", "-f", "Makefile.gvm").CombinedOutput()
-	if err != nil {
-		p.logger.Error("Failed to build")
-		p.logger.Error(string(out))
-		return false
+	_, err := os.Open("Makefile.gvm")
+	if err == nil {
+		out, err := exec.Command("make", "-f", "Makefile.gvm").CombinedOutput()
+		if err != nil {
+			p.logger.Error("Failed to build")
+			p.logger.Error(string(out))
+			return false
+		}
+	} else {
+		out, err := exec.Command("gb", "-bi").CombinedOutput()
+		if err != nil {
+			p.logger.Error("Failed to build")
+			p.logger.Error(string(out))
+			return false
+		}
 	}
+	
 	os.Setenv("BUILD_NUMBER", old_build_number)
 
 	p.logger.Info("Installing", p.name + "-" + p.version + "...")
@@ -212,6 +228,7 @@ func (p *Package) Install() {
 		p.logger.Fatal("ERROR Getting package source")
 	}
 	if !p.Build() {
+		p.gvm.DeletePackage(p)
 		p.logger.Fatal("ERROR Building package")
 	}
 }

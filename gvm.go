@@ -12,25 +12,77 @@ type Gvm struct {
 	go_root string
 	pkgset_name string
 	pkgset_root string
-	sources []string
+	sources []*Source
 	logger *Logger
 }
 
-func NewGvm(logger *Logger) *Gvm {
-	gvm := &Gvm{logger: logger}
-	gvm.root = os.Getenv("GVM_ROOT")
-	gvm.go_name = os.Getenv("gvm_go_name")
-	gvm.go_root = filepath.Join(gvm.root, "gos", gvm.go_name)
-	gvm.pkgset_name = os.Getenv("gvm_pkgset_name")
-	gvm.pkgset_root = filepath.Join(gvm.root, "pkgsets", gvm.go_name, gvm.pkgset_name)
-
-	data, err := ioutil.ReadFile(filepath.Join(gvm.root, "config", "sources"))
-	if err != nil {
-		panic(err)
+func (gvm *Gvm) AddSource(src string) bool {
+	for _, check_src := range gvm.sources {
+		if check_src.root == src {
+			gvm.logger.Fatal("Source already exists!")
+		}
 	}
 
-	gvm.sources = strings.Split(string(data), "\n")
-	return gvm
+	source_file := filepath.Join(gvm.root, "config", "sources")
+	data, err := ioutil.ReadFile(source_file)
+	if err != nil {
+		return false
+	}
+	data = []byte(string(data) + "\n" + src)
+	err = ioutil.WriteFile(source_file, data, 0644)
+	if err != nil {
+		return false
+	}
+	
+	gvm.ReadSources()
+	return true
+}
+
+func (gvm *Gvm) RemoveSource(src string) bool {
+	source_file := filepath.Join(gvm.root, "config", "sources")
+	data, err := ioutil.ReadFile(source_file)
+	if err != nil {
+		return false
+	}
+	src_list := strings.Split(string(data), "\n")
+	output := ""
+	for _, check_src := range src_list {
+		if check_src != "" && strings.TrimSpace(check_src)[0] != '#' {
+			if strings.TrimSpace(check_src) != src {
+				output += check_src + "\n"
+			}
+		} else {
+			output += check_src + "\n"
+		}
+	}
+	err = ioutil.WriteFile(source_file, []byte(output), 0644)
+	if err != nil {
+		return false
+	}
+	return true
+}
+
+func (gvm *Gvm) ReadSources() bool {
+	data, err := ioutil.ReadFile(filepath.Join(gvm.root, "config", "sources"))
+	if err != nil {
+		return false
+	}
+	src_list := strings.Split(string(data), "\n")
+	count := 0
+	for _, src := range src_list {
+		if src != "" && strings.TrimSpace(src)[0] != '#' {
+			count++
+		}
+	}
+	gvm.sources = make([]*Source, count)
+	count = 0
+	for _, src := range src_list {
+		if src != "" && strings.TrimSpace(src)[0] != '#' {
+			gvm.sources[count] = NewSource(strings.TrimSpace(src))
+			count++
+		}
+	}
+	return true
 }
 
 func (gvm *Gvm) NewPackage(name string, version string) *Package {
@@ -60,7 +112,7 @@ func (gvm *Gvm) InstallPackage(name string) *Package {
 func (gvm *Gvm) FindPackageByVersion(name string, version string) *Package {
 	gvm.logger.Trace("name", name)
 	gvm.logger.Trace("version", version)
-	_, err := os.Open(filepath.Join(gvm.pkgset_root, "pkg.gvm", name, version, "pkg"))
+	_, err := os.Open(filepath.Join(gvm.pkgset_root, "pkg.gvm", name, version))
 	if err == nil {
 		p := gvm.NewPackage(name, version)
 		return p

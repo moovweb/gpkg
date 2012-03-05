@@ -16,7 +16,7 @@ func findImport(name string, packages[] string) bool {
 	return false
 }
 
-func graph() {
+func (gpkg *Gpkg) graph() {
 	gvm_path := os.Getenv("GVM_ROOT")
 	gvm_go_name := os.Getenv("gvm_go_name")
 
@@ -32,6 +32,6 @@ func graph() {
 	}
 
 	for _, str := range dep {
-		fmt.Print(path.Base(wd), "->", str + ";")
+		fmt.Print(path.Base(wd), "->", str + ";\n")
 	}
 }
