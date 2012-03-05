@@ -1,53 +1,41 @@
 package main
 
+import "exec"
 import "os"
-import "flag"
 
-type GpkgApp struct {
-	command string
-}
-
-func showCommands() {
-	println("Please choose a command:")
-	println("  Choices are: build, graph, install, uninstall")
-	os.Exit(1)
-}
-
-func New() (g *GpkgApp) {
-	g = &GpkgApp{}
-	g.readArgs()
+func FileCopy(src string, dst string) (err os.Error) {
+	_, err = exec.Command("cp", "-r", src, dst).CombinedOutput()
 	return
 }
 
-func (g *GpkgApp) readArgs() {
-	if len(os.Args) > 1 {
-		g.command = os.Args[1]
-		if g.command != "build" && g.command != "graph" && g.command != "install" && g.command != "uninstall" {
-			showCommands()
-		}
-		os.Args = os.Args[1:]
-	} else {
-		showCommands()
+func readCommand() string {
+	if len(os.Args) < 2 {
+		return ""
 	}
-
-	flag.Parse()
-}
-
-func (g *GpkgApp) start() {
-	if g.command == "build" {
-		g.build()
-	} else if g.command == "install" {
-		g.install()
-	} else if g.command == "uninstall" {
-		g.uninstall()
-	} else if g.command == "list" {
-		g.list()
-	} else if g.command == "graph" {
-		g.graph()
-	}
+	os.Args = os.Args[1:]
+	return os.Args[0]
 }
 
 func main() {
-	g := New()
-	g.start()
+	command := readCommand()
+	logger := NewLogger("gpkg: ", INFO)
+	gvm := NewGvm(logger)
+
+	if command == "install" {
+		pkgname := readCommand()
+		if pkgname == "" {
+			logger.Fatal("Please specify package name")
+		}
+		gvm.InstallPackage(pkgname, "0.0.src")
+	} else if command == "list" {
+		pkgs := gvm.PackageList()
+		for _, pkg := range pkgs {
+			logger.Info(pkg.name, "(" + pkg.version + ")")
+		}
+	} else if command == "graph" {
+		graph()
+	} else {
+		logger.Fatal("Invalid command. Please use: list, install or uninstall")
+	}
 }
+

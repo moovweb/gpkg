@@ -16,7 +16,7 @@ func findImport(name string, packages[] string) bool {
 	return false
 }
 
-func (g *GpkgApp) graph() {
+func graph() {
 	gvm_path := os.Getenv("GVM_ROOT")
 	gvm_go_name := os.Getenv("gvm_go_name")
 
