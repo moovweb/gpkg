@@ -23,12 +23,21 @@ func (gpkg *Gpkg) listPackage(pkg *Package) {
 	logger.Info("  version:", pkg.version)
 	data, err := ioutil.ReadFile(filepath.Join(pkg.root, pkg.version, "manifest"))
 	if err == nil {
-		logger.Info("  deps:")
 		lines := strings.Split(string(data), "\n")
 		for _, line := range lines {
-			if len(line) > 3 && line[0:3] == "pkg" {
-				logger.Info("   ", line[4:])
+			if len(line) > 7 && line[0:7] == ":source" {
+				logger.Info("  source:", line[8:])
 			}
+		}
+		deps := ""
+		for _, line := range lines {
+			if len(line) > 3 && line[0:3] == "pkg" {
+				deps += "    " + line[4:] + "\n"
+			}
+		}
+		if deps != "" {
+			logger.Info("  deps:")
+			logger.Info(deps)
 		}
 	}
 }

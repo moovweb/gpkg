@@ -170,7 +170,7 @@ func (p *Package) LoadImports() bool {
 }
 
 func (p *Package) WriteManifest() {
-	manifest := ""
+	manifest := ":source " + p.source + "\n"
 	for _, pkg := range p.deps {
 		manifest += "pkg " + pkg.name + " " + pkg.version + "\n"
 	}
