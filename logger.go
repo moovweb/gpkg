@@ -2,6 +2,8 @@ package main
 
 import "fmt"
 import "os"
+import "runtime"
+import "path"
 
 type Logger struct {
 	name string
@@ -14,6 +16,7 @@ const (
 	ERROR
 	INFO
 	DEBUG
+	TRACE
 )
 
 func NewLogger(name string, level int) *Logger {
@@ -64,6 +67,17 @@ func (log *Logger) Info(msg ...interface{}) {
 func (log *Logger) Debug(msg ...interface{}) {
 	buf := fmt.Sprintln(msg...)
 	log.print(os.Stderr, DEBUG, buf)
+}
+
+func (log *Logger) Trace(name string, value string, msg ...interface{}) {
+	buf := fmt.Sprintln(msg...)
+	
+	pc, file, line, _ := runtime.Caller(1)
+	fnc := runtime.FuncForPC(pc)
+	stacktrace := fmt.Sprintf("%s:%d:%s:%v=%v", path.Base(file), line, fnc.Name(), name, value)
+
+	buf = fmt.Sprintf("=== TRACE: %s === %s", stacktrace, buf)
+	log.print(os.Stderr, TRACE, buf)
 }
 
 func (log *Logger) Debugf(format string, msg ...interface{}) {
