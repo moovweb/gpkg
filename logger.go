@@ -19,6 +19,10 @@ const (
 	TRACE
 )
 
+const TTYGreen = "\x1b[32m"
+const TTYRed = "\x1b[31m"
+const TTYReset = "\x1b[0m"
+
 func NewLogger(name string, level int) *Logger {
 	/*if len(name) > 6 {
 		name = name[0:6]
@@ -50,23 +54,28 @@ func (log *Logger) print(dev *os.File, level int, msg string) {
 
 func (log *Logger) Fatal(msg ...interface{}) {
 	buf := fmt.Sprintln(msg...)
-	log.print(os.Stderr, FATAL, buf)
+	log.print(os.Stderr, FATAL, TTYRed + buf + TTYReset)
 	os.Exit(1)
 }
 
 func (log *Logger) Error(msg ...interface{}) {
 	buf := fmt.Sprintln(msg...)
-	log.print(os.Stderr, ERROR, buf)
+	log.print(os.Stderr, ERROR, TTYRed + buf + TTYReset)
 }
 
 func (log *Logger) Info(msg ...interface{}) {
 	buf := fmt.Sprintln(msg...)
-	log.print(os.Stderr, INFO, buf)
+	log.print(os.Stdout, INFO, buf)
+}
+
+func (log *Logger) Message(msg ...interface{}) {
+	buf := fmt.Sprintln(msg...)
+	log.print(os.Stdout, INFO, TTYGreen + buf + TTYReset)
 }
 
 func (log *Logger) Debug(msg ...interface{}) {
 	buf := fmt.Sprintln(msg...)
-	log.print(os.Stderr, DEBUG, buf)
+	log.print(os.Stdout, DEBUG, buf)
 }
 
 func (log *Logger) Trace(name string, value string, msg ...interface{}) {
@@ -77,11 +86,11 @@ func (log *Logger) Trace(name string, value string, msg ...interface{}) {
 	stacktrace := fmt.Sprintf("%s:%d:%s:%v=%v", path.Base(file), line, fnc.Name(), name, value)
 
 	buf = fmt.Sprintf("=== TRACE: %s === %s", stacktrace, buf)
-	log.print(os.Stderr, TRACE, buf)
+	log.print(os.Stdout, TRACE, buf)
 }
 
 func (log *Logger) Debugf(format string, msg ...interface{}) {
 	buf := fmt.Sprintf(format, msg...)
-	log.print(os.Stderr, DEBUG, buf)
+	log.print(os.Stdout, DEBUG, buf)
 }
 

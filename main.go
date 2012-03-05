@@ -33,7 +33,7 @@ func main() {
 			gvm.InstallPackageByVersion(pkgname, version)
 		}
 	} else if command == "list" {
-		logger.Info("\ngvm packages", gvm.go_name + "@" + gvm.pkgset_name, "\n")
+		logger.Message("\ngpkg list", gvm.go_name + "@" + gvm.pkgset_name, "\n")
 		pkgs := gvm.PackageList()
 		for _, pkg := range pkgs {
 			versions := pkg.GetVersions()
