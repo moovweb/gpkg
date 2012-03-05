@@ -8,9 +8,11 @@ import "go/token"
 
 type Package struct {
 	root string
+	namespace string
 	compiled bool
 	Packages[] string
 	Commands[] string
+	Imports[] string
 }
 
 func filter(file os.FileInfo) bool {
@@ -20,8 +22,8 @@ func filter(file os.FileInfo) bool {
 	return false
 }
 
-func NewPackage(root string) (p *Package) {
-	p = &Package{root: root}
+func NewPackage(root string, namespace string) (p *Package) {
+	p = &Package{root: root, namespace: namespace}
 	p.Packages = make([]string, 0, 2048)
 	p.Commands = make([]string, 0, 256)
 	p.parsePackage(p.root)

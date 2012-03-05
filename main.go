@@ -1,9 +1,9 @@
 package main
 
-import "exec"
+import "os/exec"
 import "os"
 
-func FileCopy(src string, dst string) (err os.Error) {
+func FileCopy(src string, dst string) (err error) {
 	_, err = exec.Command("cp", "-r", src, dst).CombinedOutput()
 	return
 }

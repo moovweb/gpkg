@@ -1,7 +1,7 @@
 package main
 
-import "exec"
 import "os"
+import "os/exec"
 import "io/ioutil"
 import "path/filepath"
 import "strings"

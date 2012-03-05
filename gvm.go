@@ -4,7 +4,7 @@ import "os"
 import "io/ioutil"
 import "path/filepath"
 import "strings"
-import "exec"
+import "os/exec"
 
 type Gvm struct {
 	root string
