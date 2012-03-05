@@ -1,7 +1,7 @@
 package main
 
 import "os"
-import "pkg"
+import "github.com/gpkg/pkg"
 import "path"
 import "path/filepath"
 import "strings"
