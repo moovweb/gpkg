@@ -68,10 +68,15 @@ func (gpkg *Gpkg) list() {
 			logger.Fatal("Package not found")
 		}
 	} else {
-		logger.Message("\ngpkg list", gvm.go_name + "@" + gvm.pkgset_name, "\n")
+		logger.Message("\ngpkg package list", gvm.go_name + "@" + gvm.pkgset_name, "\n")
 		pkgs := gvm.PackageList()
 		for _, pkg := range pkgs {
 			gpkg.listPackageVersions(pkg)
+		}
+		data, err := ioutil.ReadFile(filepath.Join(gvm.pkgset_root, "goinstall.log"))
+		if err == nil {
+			logger.Message("\ngoinstall package list", gvm.go_name + "@" + gvm.pkgset_name, "\n")
+			logger.Info(strings.TrimSpace(string(data)))
 		}
 	}
 	logger.Info()
