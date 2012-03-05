@@ -40,19 +40,18 @@ func (gvm *Gvm) NewPackage(name string, version string) *Package {
 		name: name,
 		version: version,
 	}
-
-	if version == "" {
-		p.version = "0.0.src"
-	}
 	p.root = filepath.Join(p.gvm.pkgset_root, "pkg.gvm", p.name)
 	return p
 }
 
-func (gvm *Gvm) InstallPackage(name string, version string) *Package {
-	if gvm.FindPackageByVersion(name, version) != nil {
-		gvm.logger.Fatal("Package", name, "already installed!")
-	}
+func (gvm *Gvm) InstallPackageByVersion(name string, version string) *Package {
 	p := gvm.NewPackage(name, version)
+	p.Install()
+	return p
+}
+
+func (gvm *Gvm) InstallPackage(name string) *Package {
+	p := gvm.NewPackage(name, "")
 	p.Install()
 	return p
 }
@@ -65,6 +64,18 @@ func (gvm *Gvm) FindPackageByVersion(name string, version string) *Package {
 	return nil
 }
 
+func (gvm *Gvm) FindPackage(name string) *Package {
+	_, err := os.Open(filepath.Join(gvm.pkgset_root, "pkg.gvm", name))
+	if err == nil {
+		verions, _ := ioutil.ReadDir(filepath.Join(gvm.pkgset_root, "pkg.gvm", name))
+		for _, version := range verions {
+			return gvm.NewPackage(name, version.Name)
+		}
+		os.Exit(1)
+	}
+	return nil
+}
+
 func (gvm *Gvm) PackageList() (pkglist[] *Package) {
 	out, err := exec.Command("ls", filepath.Join(gvm.pkgset_root, "pkg.gvm")).CombinedOutput()
 	if err == nil {
@@ -72,7 +83,7 @@ func (gvm *Gvm) PackageList() (pkglist[] *Package) {
 		pkgs = pkgs[0:len(pkgs)-1]
 		pkglist = make([]*Package, len(pkgs))
 		for n, pkg := range pkgs {
-			pkglist[n] = gvm.NewPackage(pkg, "0.0.src")
+			pkglist[n] = gvm.NewPackage(pkg, "")
 		}
 		return pkglist
 	}

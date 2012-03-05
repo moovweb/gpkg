@@ -18,7 +18,7 @@ func readCommand() string {
 
 func main() {
 	command := readCommand()
-	logger := NewLogger("gpkg: ", INFO)
+	logger := NewLogger("", INFO)
 	gvm := NewGvm(logger)
 
 	if command == "install" {
@@ -26,12 +26,22 @@ func main() {
 		if pkgname == "" {
 			logger.Fatal("Please specify package name")
 		}
-		gvm.InstallPackage(pkgname, "0.0.src")
+		gvm.InstallPackage(pkgname)
 	} else if command == "list" {
+		logger.Info("\ngvm packages", gvm.go_name + "@" + gvm.pkgset_name, "\n")
 		pkgs := gvm.PackageList()
 		for _, pkg := range pkgs {
-			logger.Info(pkg.name, "(" + pkg.version + ")")
+			versions := pkg.GetVersions()
+			version_str := ""
+			for n, version := range versions {
+				version_str += version
+				if n < len(versions) - 1 {
+					version_str += ", "
+				}
+			}
+			logger.Info(pkg.name, "(" + version_str + ")")
 		}
+		logger.Info()
 	} else if command == "graph" {
 		graph()
 	} else {
