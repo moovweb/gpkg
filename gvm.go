@@ -68,6 +68,30 @@ func (gvm *Gvm) FindPackageByVersion(name string, version string) *Package {
 	return nil
 }
 
+func (gvm *Gvm) DeletePackage(p *Package) bool {
+	err := os.RemoveAll(filepath.Join(p.root, p.version))
+	if err == nil {
+		if gvm.FindPackage(p.name) == nil {
+			err := os.RemoveAll(filepath.Join(p.root))
+			if err == nil {
+				return true
+			} else {
+				return false
+			}
+		}
+		return true
+	}
+	return false
+}
+
+func (gvm *Gvm) DeletePackages(name string) bool {
+	err := os.RemoveAll(filepath.Join(gvm.pkgset_root, "pkg.gvm", name))
+	if err == nil {
+		return true
+	}
+	return false
+}
+
 func (gvm *Gvm) FindPackage(name string) *Package {
 	gvm.logger.Trace("name", name)
 	_, err := os.Open(filepath.Join(gvm.pkgset_root, "pkg.gvm", name))
@@ -77,7 +101,7 @@ func (gvm *Gvm) FindPackage(name string) *Package {
 			p := gvm.NewPackage(name, version.Name)
 			return p
 		}
-		os.Exit(1)
+		return nil
 	}
 	return nil
 }

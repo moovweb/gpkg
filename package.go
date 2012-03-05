@@ -75,7 +75,7 @@ func (p *Package) Get() bool {
 		}
 		_, err = exec.Command("git", "checkout", p.version).CombinedOutput()
 		if err != nil {
-			p.logger.Fatal("Invalid version of", p.name, "specified")
+			p.logger.Fatal("Invalid version:", p.version, "of", p.name, "specified")
 		}
 	}
 
@@ -89,7 +89,13 @@ func (p *Package) Get() bool {
 		if os.Getenv("BUILD_NUMBER") != "" {
 			p.version += "." + os.Getenv("BUILD_NUMBER")
 		} else {
-			p.version += ".src"
+			err := os.Chdir(p.tmpsrc + "/" + p.name)
+			out, err := exec.Command("git", "describe", "--exact-match", "--tags", "--match", "*.*.*").CombinedOutput()
+			if err == nil {
+				p.version = strings.TrimSpace(string(out))
+			} else {
+				p.version += ".src"
+			}
 		}
 	}	
 
