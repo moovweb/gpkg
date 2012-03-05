@@ -169,6 +169,14 @@ func (p *Package) LoadImports() bool {
 	return true
 }
 
+func (p *Package) WriteManifest() {
+	manifest := ""
+	for _, pkg := range p.deps {
+		manifest += "pkg " + pkg.name + " " + pkg.version + "\n"
+	}
+	ioutil.WriteFile(filepath.Join(p.root, p.version, "manifest"), []byte(manifest), 0664)
+}
+
 func (p *Package) Build() bool {
 	p.tmpdir = fmt.Sprintf("%s/tmp/%d/%s/%s", p.gvm.root, os.Getpid(), p.name, "build")
 	p.tmpimp = fmt.Sprintf("%s/tmp/%d/%s/%s", p.gvm.root, os.Getpid(), p.name, "import")
@@ -200,12 +208,13 @@ func (p *Package) Build() bool {
 			return false
 		}
 	}
+
+	p.WriteManifest()
 	
 	os.Setenv("BUILD_NUMBER", old_build_number)
 
 	p.logger.Info("Installing", p.name + "-" + p.version + "...")
 
-	//ioutil.WriteFile(filepath.Join(p.root, p.version, "manifest"), []byte(p.deps), 0664)
 	err = FileCopy(filepath.Join(p.tmpdir, "pkg"), filepath.Join(p.root, p.version, "pkg"))
 	if err != nil {
 		return false
