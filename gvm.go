@@ -5,7 +5,7 @@ import "io/ioutil"
 import "path/filepath"
 import "strings"
 import "exec"
-import "versions"
+import "github.com/moovweb/gpkg/versions"
 
 type Gvm struct {
 	root string

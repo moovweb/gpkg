@@ -7,7 +7,7 @@ import "path/filepath"
 import "strings"
 import "strconv"
 import "fmt"
-import "versions"
+import "github.com/moovweb/gpkg/versions"
 
 type Package struct {
 	gvm *Gvm
