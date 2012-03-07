@@ -1,7 +1,6 @@
 package main
 
 import "os"
-import "path/filepath"
 
 func (gpkg *Gpkg) build() {
 	gvm := gpkg.gvm
