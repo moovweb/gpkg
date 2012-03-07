@@ -38,15 +38,20 @@ func (gpkg *Gpkg) NewGvm() *Gvm {
 }
 
 func main() {
-	logger := NewLogger("", INFO)
+	logger := NewLogger("", DEBUG)
 	gpkg := &Gpkg{logger: logger}
 	gpkg.NewGvm()
 	command := readCommand()
 
 	if command == "install" {
 		gpkg.install()
+	} else if command == "debug" {
+		logger.Info(gpkg.gvm.FindPackage("manhattan"))
+		return
 	} else if command == "uninstall" {
 		gpkg.uninstall()
+	} else if command == "build" {
+		gpkg.build()
 	} else if command == "list" {
 		gpkg.list()
 	} else if command == "sources" {

@@ -5,6 +5,7 @@ import "io/ioutil"
 import "path/filepath"
 import "strings"
 import "exec"
+import "versions"
 
 type Gvm struct {
 	root string
@@ -85,19 +86,19 @@ func (gvm *Gvm) ReadSources() bool {
 	return true
 }
 
-func (gvm *Gvm) NewPackage(name string, version string) *Package {
+func (gvm *Gvm) NewPackage(name string, tag string) *Package {
 	p := &Package{
 		gvm: gvm,
 		logger: gvm.logger,
 		name: name,
-		version: version,
+		tag: tag,
 	}
 	p.root = filepath.Join(p.gvm.pkgset_root, "pkg.gvm", p.name)
 	return p
 }
 
-func (gvm *Gvm) InstallPackageByVersion(name string, version string) *Package {
-	p := gvm.NewPackage(name, version)
+func (gvm *Gvm) InstallPackageByVersion(name string, tag string) *Package {
+	p := gvm.NewPackage(name, tag)
 	p.Install()
 	return p
 }
@@ -121,7 +122,7 @@ func (gvm *Gvm) FindPackageByVersion(name string, version string) *Package {
 }
 
 func (gvm *Gvm) DeletePackage(p *Package) bool {
-	err := os.RemoveAll(filepath.Join(p.root, p.version))
+	err := os.RemoveAll(filepath.Join(p.root, p.tag))
 	if err == nil {
 		if gvm.FindPackage(p.name) == nil {
 			err := os.RemoveAll(filepath.Join(p.root))
@@ -145,17 +146,36 @@ func (gvm *Gvm) DeletePackages(name string) bool {
 }
 
 func (gvm *Gvm) FindPackage(name string) *Package {
+	var p *Package
+
 	gvm.logger.Trace("name", name)
 	_, err := os.Open(filepath.Join(gvm.pkgset_root, "pkg.gvm", name))
 	if err == nil {
-		verions, _ := ioutil.ReadDir(filepath.Join(gvm.pkgset_root, "pkg.gvm", name))
-		for _, version := range verions {
-			p := gvm.NewPackage(name, version.Name)
-			return p
+		dirs, err := ioutil.ReadDir(filepath.Join(gvm.pkgset_root, "pkg.gvm", name))
+		if err != nil {
+			panic("No versions")
 		}
-		return nil
+		for _, dir := range dirs {
+			this_version, err := versions.NewVersion(dir.Name)
+			if err != nil {
+				gvm.logger.Info("bad version", dir.Name)
+				continue
+			}
+			if p != nil {
+				current_version, err := versions.NewVersion(p.tag)
+				if err != nil {
+					gvm.logger.Info("bad version", p.tag)
+					continue
+				}
+				if this_version.NewerThan(current_version) {
+					p = gvm.NewPackage(name, dir.Name)
+				}
+			} else {
+				p = gvm.NewPackage(name, dir.Name)
+			}
+		}
 	}
-	return nil
+	return p
 }
 
 func (gvm *Gvm) PackageList() (pkglist[] *Package) {

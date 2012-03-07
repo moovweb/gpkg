@@ -21,7 +21,7 @@ func (gpkg *Gpkg) listPackage(pkg *Package) {
 	logger := gpkg.logger
 	logger.Message("Package Info:", pkg.name)
 	logger.Info("  version:", pkg.version)
-	data, err := ioutil.ReadFile(filepath.Join(pkg.root, pkg.version, "manifest"))
+	data, err := ioutil.ReadFile(filepath.Join(pkg.root, pkg.version.String(), "manifest"))
 	if err == nil {
 		lines := strings.Split(string(data), "\n")
 		for _, line := range lines {

@@ -5,20 +5,40 @@ import "os"
 import "io/ioutil"
 import "path/filepath"
 import "strings"
+import "strconv"
 import "fmt"
+import "versions"
 
 type Package struct {
 	gvm *Gvm
 	root string
 	name string
-	version string
+	tag string
+	version *versions.Version
 	source string
 	src string
-	tmpdir string
-	tmpimp string
 	tmpsrc string
 	logger *Logger
 	deps map[string]*Package
+}
+
+func (p *Package) String() string {
+	return "   root: " + p.root + "\n" +
+		"   name: " + p.name + "\n" +
+		"    tag: " + p.tag + "\n" +
+		" source: " + p.source + "\n" +
+		"    src: " + p.src + "\n" +
+		" tmpsrc: " + p.tmpsrc + "\n" //+
+		//"   deps: " + p.deps + "\n"
+}
+
+func (p *Package) GetVersions() []string {
+	dirs, _ := ioutil.ReadDir(p.root)
+	versions := make([]string, len(dirs))
+	for n, d := range dirs {
+		versions[n] = d.Name
+	}
+	return versions
 }
 
 func (p *Package) FindSource() bool {
@@ -41,15 +61,6 @@ func (p *Package) FindSource() bool {
 	return false
 }
 
-func (p *Package) GetVersions() []string {
-	dirs, _ := ioutil.ReadDir(p.root)
-	versions := make([]string, len(dirs))
-	for n, d := range dirs {
-		versions[n] = d.Name
-	}
-	return versions
-}
-
 func (p *Package) Get() bool {
 	p.tmpsrc = filepath.Join(p.gvm.root, "tmp", fmt.Sprintf("%d", os.Getpid()), p.name, "src")
 	os.MkdirAll(p.tmpsrc, 0775)
@@ -67,73 +78,73 @@ func (p *Package) Get() bool {
 		}
 	}
 
-	if p.version != "" {
-		p.logger.Debug(" * Checking out ", p.version)
+	if p.tag != "" {
+		p.logger.Debug(" * Checking out ", p.tag)
 		err := os.Chdir(p.tmpsrc + "/" + p.name)
 		if err != nil {
-			p.logger.Fatal("Unable to chdir to checkout version", p.version, "of", p.name)
+			p.logger.Fatal("Unable to chdir to checkout version", p.tag, "of", p.name)
 		}
-		_, err = exec.Command("git", "checkout", p.version).CombinedOutput()
+		_, err = exec.Command("git", "checkout", p.tag).CombinedOutput()
 		if err != nil {
-			p.logger.Fatal("Invalid version:", p.version, "of", p.name, "specified")
+			p.logger.Fatal("Invalid version:", p.tag, "of", p.name, "specified")
 		}
 	}
 
-	if p.version == "" {
+	if p.tag == "" {
 		v, err := ioutil.ReadFile(filepath.Join(p.tmpsrc, p.name, "VERSION"))
 		if err == nil {
-			p.version = strings.TrimSpace(string(v))
+			p.tag = strings.TrimSpace(string(v))
 		} else {
-			//p.version = "0.0"
-			p.version = ""
+			//p.tag = "0.0"
+			p.tag = ""
 		}
 		if os.Getenv("BUILD_NUMBER") != "" {
-			p.version += "." + os.Getenv("BUILD_NUMBER")
+			p.tag += "." + os.Getenv("BUILD_NUMBER")
 		} else {
 			err := os.Chdir(p.tmpsrc + "/" + p.name)
 			out, err := exec.Command("git", "describe", "--exact-match", "--tags", "--match", "*.*.*").CombinedOutput()
 			if err == nil {
-				p.version = strings.TrimSpace(string(out))
+				p.tag = strings.TrimSpace(string(out))
 			} else {
-				if p.version != "" {
-					p.version += ".src"
+				if p.tag != "" {
+					p.tag += ".src"
 				} else {
-					p.version = "src"
+					p.tag = "src"
 				}
 			}
 		}
 	}	
 
-	p.src = filepath.Join(p.root, p.version, "src")
-	os.MkdirAll(filepath.Join(p.root, p.version), 0775)
+	p.src = filepath.Join(p.root, p.tag, "src")
+	os.MkdirAll(filepath.Join(p.root, p.tag), 0775)
 	FileCopy(p.tmpsrc, p.src)
 
 	return true
 }
 
-func (p *Package) LoadImport(dep *Package) {
+func (p *Package) LoadImport(dep *Package, dir string) {
 	//p.logger.Trace("dep", fmt.Sprint(dep))
 	if p.deps[dep.name] != nil {
-		if p.deps[dep.name].version != dep.version {
+		if p.deps[dep.name].tag != dep.tag {
 			p.logger.Error("Version conflict!")
-			p.logger.Fatal(dep.name, "version:", p.deps[dep.name].version, "Imported already for", p.name)
+			p.logger.Fatal(dep.name, "version:", p.deps[dep.name].tag, "Imported already for", p.name)
 		}
 	} else {
 		for _, subdep := range dep.deps {
-			p.LoadImport(subdep)
+			p.LoadImport(subdep, dir)
 		}
 		p.deps[dep.name] = dep
 	}
 
-	//p.deps += "pkg " + dep.name + " " + dep.version + "\n"
-	os.MkdirAll(p.tmpimp, 0775)
-	err := FileCopy(filepath.Join(dep.root, dep.version, "pkg"), p.tmpimp)
+	//p.deps += "pkg " + dep.name + " " + dep.tag + "\n"
+	os.MkdirAll(dir, 0775)
+	err := FileCopy(filepath.Join(dep.root, dep.tag, "pkg"), dir)
 	if err != nil {
 		p.logger.Fatal("ERROR: Couldn't load import: " + dep.name)
 	}
 }
 
-func (p *Package) LoadImports() bool {
+func (p *Package) LoadImports(dir string) bool {
 	data, err := ioutil.ReadFile(filepath.Join(p.src, p.name, "manifest"))
 	if err != nil {
 		data, err = ioutil.ReadFile(filepath.Join(p.src, p.name, "Package.gvm"))
@@ -163,7 +174,7 @@ func (p *Package) LoadImports() bool {
 			if dep == nil {
 				p.logger.Fatal("ERROR: Couldn't find " + params[1] + " in any sources")
 			}
-			p.LoadImport(dep)
+			p.LoadImport(dep, dir)
 		}
 	}
 	return true
@@ -172,26 +183,27 @@ func (p *Package) LoadImports() bool {
 func (p *Package) WriteManifest() {
 	manifest := ":source " + p.source + "\n"
 	for _, pkg := range p.deps {
-		manifest += "pkg " + pkg.name + " " + pkg.version + "\n"
+		manifest += "pkg " + pkg.name + " " + pkg.tag + "\n"
 	}
-	ioutil.WriteFile(filepath.Join(p.root, p.version, "manifest"), []byte(manifest), 0664)
+	ioutil.WriteFile(filepath.Join(p.root, p.tag, "manifest"), []byte(manifest), 0664)
 }
 
 func (p *Package) Build() bool {
-	p.tmpdir = fmt.Sprintf("%s/tmp/%d/%s/%s", p.gvm.root, os.Getpid(), p.name, "build")
-	p.tmpimp = fmt.Sprintf("%s/tmp/%d/%s/%s", p.gvm.root, os.Getpid(), p.name, "import")
+	base_dir := filepath.Join(p.gvm.root, "tmp", strconv.Itoa(os.Getpid()), p.name)
+	tmp_build_dir := filepath.Join(base_dir, "build")
+	tmp_import_dir := filepath.Join(base_dir, "import")
 
-	if !p.LoadImports() {
+	if !p.LoadImports(tmp_import_dir) {
 		p.logger.Error("Failed to load imports")
 		return false
 	}
 
-	p.logger.Debug(" * Building", p.name, p.version)
+	p.logger.Debug(" * Building", p.name, p.tag)
 
 	os.Chdir(filepath.Join(p.src, p.name))
-	os.Setenv("GOPATH", p.tmpdir + ":" + p.tmpimp)
+	os.Setenv("GOPATH", tmp_build_dir + ":" + tmp_import_dir)
 	old_build_number := os.Getenv("BUILD_NUMBER")	
-	os.Setenv("BUILD_NUMBER", p.version)
+	os.Setenv("BUILD_NUMBER", p.tag)
 	_, err := os.Open("Makefile.gvm")
 	if err == nil {
 		out, err := exec.Command("make", "-f", "Makefile.gvm").CombinedOutput()
@@ -213,14 +225,14 @@ func (p *Package) Build() bool {
 	
 	os.Setenv("BUILD_NUMBER", old_build_number)
 
-	p.logger.Info("Installing", p.name + "-" + p.version + "...")
+	p.logger.Info("Installing", p.name + "-" + p.tag + "...")
 
-	err = FileCopy(filepath.Join(p.tmpdir, "pkg"), filepath.Join(p.root, p.version, "pkg"))
+	err = FileCopy(filepath.Join(tmp_build_dir, "pkg"), filepath.Join(p.root, p.tag, "pkg"))
 	if err != nil {
 		return false
 	}
 
-	err = FileCopy(filepath.Join(p.tmpdir, "bin"), filepath.Join(p.gvm.pkgset_root))
+	err = FileCopy(filepath.Join(tmp_build_dir, "bin"), filepath.Join(p.gvm.pkgset_root))
 	if err == nil {
 		p.logger.Debug(" * Installed binaries")
 	}
@@ -229,7 +241,7 @@ func (p *Package) Build() bool {
 }
 
 func (p *Package) Install() {
-	p.logger.Debug("Starting install of", p.name, p.version)
+	p.logger.Debug("Starting install of", p.name, p.tag)
 	if p.source == "" {
 		if !p.FindSource() {
 			p.logger.Fatal("ERROR Finding package")

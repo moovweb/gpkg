@@ -1,7 +1,7 @@
 package main
 
 import "os"
-import "github.com/moovweb/gpkg/pkg"
+import "pkg"
 import "path"
 import "path/filepath"
 import "strings"
