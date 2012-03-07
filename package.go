@@ -95,8 +95,7 @@ func (p *Package) Get() bool {
 		if err == nil {
 			p.tag = strings.TrimSpace(string(v))
 		} else {
-			//p.tag = "0.0"
-			p.tag = ""
+			p.tag = "0.0"
 		}
 		if os.Getenv("BUILD_NUMBER") != "" {
 			p.tag += "." + os.Getenv("BUILD_NUMBER")
