@@ -97,19 +97,6 @@ func (gvm *Gvm) NewPackage(name string, tag string) *Package {
 	return p
 }
 
-func (gvm *Gvm) InstallPackageByVersion(name string, tag string) *Package {
-	p := gvm.NewPackage(name, tag)
-	p.Install()
-	return p
-}
-
-func (gvm *Gvm) InstallPackage(name string) *Package {
-	gvm.logger.Trace("name", name)
-	p := gvm.NewPackage(name, "")
-	p.Install()
-	return p
-}
-
 func (gvm *Gvm) FindPackageByVersion(name string, version string) *Package {
 	gvm.logger.Trace("name", name)
 	gvm.logger.Trace("version", version)

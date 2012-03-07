@@ -7,6 +7,7 @@ func (gpkg *Gpkg) build() {
 	wd, _ := os.Getwd()
 	p := gvm.NewPackage(os.Args[1], "")
 	p.source = wd
-	p.Install()
+	p.Install(gpkg.tmpdir)
+	os.RemoveAll(gpkg.tmpdir)
 	return
 }

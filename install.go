@@ -14,15 +14,17 @@ func (gpkg *Gpkg) install() {
 		wd, _ := os.Getwd()
 		p := gvm.NewPackage(filepath.Base(wd), "")
 		p.source = wd
-		p.Install()
+		p.Install(gpkg.tmpdir)
 		return
 	}
 
 	version := flag.String("version", "", "Package version to install")
 	flag.Parse()
 	if *version == "" {
-		gvm.InstallPackage(pkgname)
+		p := &Package{name:pkgname}
+		p.Install(gpkg.tmpdir)
 	} else {
-		gvm.InstallPackageByVersion(pkgname, *version)
+		p := &Package{name:pkgname,tag:*version}
+		p.Install(gpkg.tmpdir)
 	}
 }

@@ -5,8 +5,6 @@ import "os"
 import "io/ioutil"
 import "path/filepath"
 import "strings"
-import "strconv"
-import "fmt"
 import "github.com/moovweb/gpkg/versions"
 
 type Package struct {
@@ -17,7 +15,7 @@ type Package struct {
 	version *versions.Version
 	source string
 	src string
-	tmpsrc string
+	tmpdir string
 	logger *Logger
 	deps map[string]*Package
 }
@@ -27,9 +25,7 @@ func (p *Package) String() string {
 		"   name: " + p.name + "\n" +
 		"    tag: " + p.tag + "\n" +
 		" source: " + p.source + "\n" +
-		"    src: " + p.src + "\n" +
-		" tmpsrc: " + p.tmpsrc + "\n" //+
-		//"   deps: " + p.deps + "\n"
+		"    src: " + p.src + "\n"
 }
 
 func (p *Package) GetVersions() []string {
@@ -62,17 +58,17 @@ func (p *Package) FindSource() bool {
 }
 
 func (p *Package) Get() bool {
-	p.tmpsrc = filepath.Join(p.gvm.root, "tmp", fmt.Sprintf("%d", os.Getpid()), p.name, "src")
-	os.MkdirAll(p.tmpsrc, 0775)
+	tmp_src_dir := filepath.Join(p.tmpdir, p.name, "src")
+	os.MkdirAll(tmp_src_dir, 0775)
 	if p.source[0] == '/' {
 		p.logger.Debug(" * Copying", p.name)
-		err := FileCopy(p.source, p.tmpsrc)
+		err := FileCopy(p.source, tmp_src_dir)
 		if err != nil {
 			return false
 		}
 	} else {
 		p.logger.Debug(" * Downloading", p.name)
-		_, err := exec.Command("git", "clone", p.source, p.tmpsrc + "/" + p.name).CombinedOutput()
+		_, err := exec.Command("git", "clone", p.source, tmp_src_dir + "/" + p.name).CombinedOutput()
 		if err != nil {
 			return false
 		}
@@ -80,7 +76,7 @@ func (p *Package) Get() bool {
 
 	if p.tag != "" {
 		p.logger.Debug(" * Checking out ", p.tag)
-		err := os.Chdir(p.tmpsrc + "/" + p.name)
+		err := os.Chdir(tmp_src_dir + "/" + p.name)
 		if err != nil {
 			p.logger.Fatal("Unable to chdir to checkout version", p.tag, "of", p.name)
 		}
@@ -91,7 +87,7 @@ func (p *Package) Get() bool {
 	}
 
 	if p.tag == "" {
-		v, err := ioutil.ReadFile(filepath.Join(p.tmpsrc, p.name, "VERSION"))
+		v, err := ioutil.ReadFile(filepath.Join(tmp_src_dir, p.name, "VERSION"))
 		if err == nil {
 			p.tag = strings.TrimSpace(string(v))
 		} else {
@@ -100,7 +96,7 @@ func (p *Package) Get() bool {
 		if os.Getenv("BUILD_NUMBER") != "" {
 			p.tag += "." + os.Getenv("BUILD_NUMBER")
 		} else {
-			err := os.Chdir(p.tmpsrc + "/" + p.name)
+			err := os.Chdir(tmp_src_dir + "/" + p.name)
 			out, err := exec.Command("git", "describe", "--exact-match", "--tags", "--match", "*.*.*").CombinedOutput()
 			if err == nil {
 				p.tag = strings.TrimSpace(string(out))
@@ -116,7 +112,7 @@ func (p *Package) Get() bool {
 
 	p.src = filepath.Join(p.root, p.tag, "src")
 	os.MkdirAll(filepath.Join(p.root, p.tag), 0775)
-	FileCopy(p.tmpsrc, p.src)
+	FileCopy(tmp_src_dir, p.src)
 
 	return true
 }
@@ -162,12 +158,14 @@ func (p *Package) LoadImports(dir string) bool {
 			if len(params) > 2 {
 				dep = p.gvm.FindPackageByVersion(params[1], params[2])
 				if dep == nil {
-					dep = p.gvm.InstallPackageByVersion(params[1], params[2])
+					dep = &Package{name:params[1],tag:params[2]}
+					dep.Install(p.tmpdir)
 				}
 			} else {
 				dep = p.gvm.FindPackage(params[1])
 				if dep == nil {
-					dep = p.gvm.InstallPackage(params[1])
+					dep = &Package{name:params[1]}
+					dep.Install(p.tmpdir)
 				}
 			}
 			if dep == nil {
@@ -188,9 +186,8 @@ func (p *Package) WriteManifest() {
 }
 
 func (p *Package) Build() bool {
-	base_dir := filepath.Join(p.gvm.root, "tmp", strconv.Itoa(os.Getpid()), p.name)
-	tmp_build_dir := filepath.Join(base_dir, "build")
-	tmp_import_dir := filepath.Join(base_dir, "import")
+	tmp_build_dir := filepath.Join(p.tmpdir, p.name, "build")
+	tmp_import_dir := filepath.Join(p.tmpdir, p.name, "import")
 
 	if !p.LoadImports(tmp_import_dir) {
 		p.logger.Error("Failed to load imports")
@@ -239,7 +236,8 @@ func (p *Package) Build() bool {
 	return true
 }
 
-func (p *Package) Install() {
+func (p *Package) Install(tmpdir string) {
+	p.tmpdir = tmpdir
 	p.logger.Debug("Starting install of", p.name, p.tag)
 	if p.source == "" {
 		if !p.FindSource() {

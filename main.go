@@ -3,10 +3,12 @@ package main
 import "exec"
 import "os"
 import "path/filepath"
+import "strconv"
 
 type Gpkg struct {
 	gvm *Gvm
 	logger *Logger
+	tmpdir string
 }
 
 func FileCopy(src string, dst string) (err os.Error) {
@@ -41,6 +43,7 @@ func main() {
 	logger := NewLogger("", DEBUG)
 	gpkg := &Gpkg{logger: logger}
 	gpkg.NewGvm()
+	gpkg.tmpdir = filepath.Join(gpkg.gvm.root, "tmp", strconv.Itoa(os.Getpid()))
 	command := readCommand()
 
 	if command == "install" {
