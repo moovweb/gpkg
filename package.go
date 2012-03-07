@@ -65,7 +65,7 @@ func (p *Package) Get() bool {
 		err := FileCopy(p.source, tmp_src_dir)
 		// TODO: This is a hack to get jenkins working on multitarget installs folder name != project name
 		if p.name != filepath.Base(p.source) {
-			p.logger.Debug("Rename", filepath.Join(tmp_src_dir, filepath.Base(p.source)), "to", filepath.Join(tmp_src_dir, p.name))
+			//p.logger.Debug(" * Rename", filepath.Join(tmp_src_dir, filepath.Base(p.source)), "to", filepath.Join(tmp_src_dir, p.name))
 			os.Rename(filepath.Join(tmp_src_dir, filepath.Base(p.source)), filepath.Join(tmp_src_dir, p.name))
 		}
 		// END TODO
@@ -124,6 +124,7 @@ func (p *Package) Get() bool {
 }
 
 func (p *Package) LoadImport(dep *Package, dir string) {
+	p.logger.Debug("    -", dep.name, dep.tag)
 	//p.logger.Trace("dep", fmt.Sprint(dep))
 	if p.deps[dep.name] != nil {
 		if p.deps[dep.name].tag != dep.tag {
@@ -192,6 +193,18 @@ func (p *Package) WriteManifest() {
 	ioutil.WriteFile(filepath.Join(p.root, p.tag, "manifest"), []byte(manifest), 0664)
 }
 
+func (p *Package) PrettyLog(buf[] byte) string {
+	lines := strings.Split(string(buf), "\n")
+	r := ""
+	for n, line := range lines {
+		r += "    : " + line
+		if n != len(lines) - 1 {
+			r += "\n"
+		}
+	}
+	return r
+}
+
 func (p *Package) Build() bool {
 	tmp_build_dir := filepath.Join(p.tmpdir, p.name, "build")
 	tmp_import_dir := filepath.Join(p.tmpdir, p.name, "import")
@@ -212,19 +225,19 @@ func (p *Package) Build() bool {
 		out, err := exec.Command("make", "-f", "Makefile.gvm").CombinedOutput()
 		if err != nil {
 			p.logger.Error("Failed to build with Makefile.gvm")
-			p.logger.Error(string(out))
+			p.logger.Error(p.PrettyLog(out))
 			return false
 		} else {
-			p.logger.Debug(string(out))
+			p.logger.Debug(p.PrettyLog(out))
 		}
 	} else {
 		out, err := exec.Command("gb", "-bi").CombinedOutput()
 		if err != nil {
 			p.logger.Error("Failed to build with gb")
-			p.logger.Error(string(out))
+			p.logger.Error(p.PrettyLog(out))
 			return false
 		} else {
-			p.logger.Debug(string(out))
+			p.logger.Debug(p.PrettyLog(out))
 		}
 	}
 
