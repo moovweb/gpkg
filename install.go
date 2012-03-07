@@ -21,10 +21,10 @@ func (gpkg *Gpkg) install() {
 	version := flag.String("version", "", "Package version to install")
 	flag.Parse()
 	if *version == "" {
-		p := &Package{name:pkgname}
+		p := gvm.NewPackage(pkgname, "")
 		p.Install(gpkg.tmpdir)
 	} else {
-		p := &Package{name:pkgname,tag:*version}
+		p := gvm.NewPackage(pkgname, *version)
 		p.Install(gpkg.tmpdir)
 	}
 }

@@ -124,7 +124,6 @@ func (p *Package) Get() bool {
 }
 
 func (p *Package) LoadImport(dep *Package, dir string) {
-	p.logger.Debug("    -", dep.name, dep.tag)
 	//p.logger.Trace("dep", fmt.Sprint(dep))
 	if p.deps[dep.name] != nil {
 		if p.deps[dep.name].tag != dep.tag {
@@ -158,27 +157,30 @@ func (p *Package) LoadImports(dir string) bool {
 
 	p.deps = make(map[string]*Package, 64)
 
-	p.logger.Debug(" * Loading deps for", p.name)
+	p.logger.Debug(" * Loading dependencies for", p.name)
 	for _, line := range strings.Split(string(data), "\n") {
 		if len(line) > 3 && line[0:3] == "pkg" {
 			params := strings.Split(line, " ")
 			var dep *Package
+			version_spec := "Don't care"
 			if len(params) > 2 {
-				dep = p.gvm.FindPackageByVersion(params[1], params[2])
+				version_spec = params[2]
+				dep = p.gvm.FindPackageByVersion(params[1], version_spec)
 				if dep == nil {
-					dep = &Package{name:params[1],tag:params[2]}
+					dep = p.gvm.NewPackage(params[1], version_spec)
 					dep.Install(p.tmpdir)
 				}
 			} else {
 				dep = p.gvm.FindPackage(params[1])
 				if dep == nil {
-					dep = &Package{name:params[1]}
+					dep = p.gvm.NewPackage(params[1], "")
 					dep.Install(p.tmpdir)
 				}
 			}
 			if dep == nil {
 				p.logger.Fatal("ERROR: Couldn't find " + params[1] + " in any sources")
 			}
+			p.logger.Debug("    -", dep.name, dep.tag, "(Spec:", version_spec + ")")
 			p.LoadImport(dep, dir)
 		}
 	}
