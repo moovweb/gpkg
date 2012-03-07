@@ -5,7 +5,7 @@ import "io/ioutil"
 import "path/filepath"
 import "strings"
 import "exec"
-import "github.com/moovweb/gpkg/versions"
+import "github.com/moovweb/versions"
 
 type Gvm struct {
 	root string
@@ -143,18 +143,24 @@ func (gvm *Gvm) FindPackage(name string) *Package {
 			panic("No versions")
 		}
 		for _, dir := range dirs {
+			gvm.logger.Info("Testing", dir.Name)
 			this_version, err := versions.NewVersion(dir.Name)
 			if err != nil {
-				gvm.logger.Info("bad version", dir.Name)
+				gvm.logger.Info("bad version1", dir.Name, err)
 				continue
 			}
 			if p != nil {
 				current_version, err := versions.NewVersion(p.tag)
 				if err != nil {
-					gvm.logger.Info("bad version", p.tag)
+					gvm.logger.Info("bad version2", p.tag, err)
 					continue
 				}
-				if this_version.NewerThan(current_version) {
+				matched, err := this_version.Matches("> " + current_version.String())
+				gvm.logger.Info("matched", matched)
+				if err != nil {
+					gvm.logger.Info("bad match", p.tag, err)
+					continue
+				} else if matched == true {
 					p = gvm.NewPackage(name, dir.Name)
 				}
 			} else {

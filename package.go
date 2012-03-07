@@ -5,7 +5,7 @@ import "os"
 import "io/ioutil"
 import "path/filepath"
 import "strings"
-import "github.com/moovweb/gpkg/versions"
+import "github.com/moovweb/versions"
 
 type Package struct {
 	gvm *Gvm
@@ -125,6 +125,9 @@ func (p *Package) Get() bool {
 
 func (p *Package) LoadImport(dep *Package, dir string) {
 	//p.logger.Trace("dep", fmt.Sprint(dep))
+	if p.name == dep.name {
+		p.logger.Fatal("Packages cannot import themselves")
+	}
 	if p.deps[dep.name] != nil {
 		if p.deps[dep.name].tag != dep.tag {
 			p.logger.Error("Version conflict!")
