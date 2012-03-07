@@ -63,6 +63,12 @@ func (p *Package) Get() bool {
 	if p.source[0] == '/' {
 		p.logger.Debug(" * Copying", p.name)
 		err := FileCopy(p.source, tmp_src_dir)
+		// TODO: This is a hack to get jenkins working on multitarget installs folder name != project name
+		if p.name != filepath.Base(p.source) {
+			p.logger.Debug("Rename", filepath.Join(tmp_src_dir, filepath.Base(p.source)), "to", filepath.Join(tmp_src_dir, p.name))
+			os.Rename(filepath.Join(tmp_src_dir, filepath.Base(p.source)), filepath.Join(tmp_src_dir, p.name))
+		}
+		// END TODO
 		if err != nil {
 			return false
 		}
@@ -144,6 +150,7 @@ func (p *Package) LoadImports(dir string) bool {
 	if err != nil {
 		data, err = ioutil.ReadFile(filepath.Join(p.src, p.name, "Package.gvm"))
 		if err != nil {
+			p.logger.Debug("No dependencies found")
 			return true
 		}
 	}
@@ -204,16 +211,20 @@ func (p *Package) Build() bool {
 	if err == nil {
 		out, err := exec.Command("make", "-f", "Makefile.gvm").CombinedOutput()
 		if err != nil {
-			p.logger.Error("Failed to build")
+			p.logger.Error("Failed to build with Makefile.gvm")
 			p.logger.Error(string(out))
 			return false
+		} else {
+			p.logger.Debug(string(out))
 		}
 	} else {
 		out, err := exec.Command("gb", "-bi").CombinedOutput()
 		if err != nil {
-			p.logger.Error("Failed to build")
+			p.logger.Error("Failed to build with gb")
 			p.logger.Error(string(out))
 			return false
+		} else {
+			p.logger.Debug(string(out))
 		}
 	}
 
