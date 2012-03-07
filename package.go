@@ -255,9 +255,6 @@ func (p *Package) Build() bool {
 	}
 
 	err = FileCopy(filepath.Join(tmp_build_dir, "bin"), filepath.Join(p.root, p.tag, "bin"))
-	if err != nil {
-		p.logger.Fatal("Failed to copy binaries")
-	}
 	err = FileCopy(filepath.Join(tmp_build_dir, "bin"), filepath.Join(p.gvm.pkgset_root))
 	if err == nil {
 		p.logger.Debug(" * Installed binaries")
