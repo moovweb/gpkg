@@ -146,14 +146,14 @@ func (p *Package) LoadImport(dep *Package, dir string) {
 }
 
 func (p *Package) LoadImports(dir string) bool {
-	data, err := ioutil.ReadFile(filepath.Join(p.src, p.name, "manifest"))
-	if err != nil {
+	//data, err := ioutil.ReadFile(filepath.Join(p.src, p.name, "manifest"))
+	//if err != nil {
 		data, err = ioutil.ReadFile(filepath.Join(p.src, p.name, "Package.gvm"))
 		if err != nil {
 			p.logger.Debug("No dependencies found")
 			return true
 		}
-	}
+	//}
 
 	p.deps = make(map[string]*Package, 64)
 
