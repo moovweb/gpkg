@@ -39,6 +39,17 @@ func (gpkg *Gpkg) NewGvm() *Gvm {
 	return gpkg.gvm
 }
 
+func (gpkg *Gpkg) printUsage() {
+	logger := gpkg.logger
+	logger.Info("  list      - List installed packages")
+	logger.Info("  install   - Install a package")
+	logger.Info("  uninstall - Uninstall a package")
+	logger.Info("  empty     - Clear out all installed packages")
+	logger.Info("  build     - Build a package in the current directory")
+	logger.Info("  sources   - List/Add/Remove sources for packages")
+	logger.Info("  graph     - Generate dot graph output using the current directory")
+}
+
 func main() {
 	logger := NewLogger("", DEBUG)
 	gpkg := &Gpkg{logger: logger}
@@ -53,6 +64,8 @@ func main() {
 		return
 	} else if command == "uninstall" {
 		gpkg.uninstall()
+	} else if command == "empty" {
+		os.RemoveAll(filepath.Join(gpkg.gvm.pkgset_root, "pkg.gvm"))
 	} else if command == "build" {
 		gpkg.build()
 	} else if command == "list" {
@@ -61,8 +74,12 @@ func main() {
 		gpkg.sources()
 	} else if command == "graph" {
 		gpkg.graph()
+	} else if command == "help" {
+		logger.Message("The following commands are available:")
+		gpkg.printUsage()
 	} else {
-		logger.Fatal("Invalid command. Please use: list, install or uninstall")
+		logger.Error("Invalid command. Please use one of the following:")
+		gpkg.printUsage()
 	}
 }
 
