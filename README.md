@@ -21,6 +21,8 @@ example1
 
 ##Creating and using a custom library
 
+gpkg uses a special Package.gvm file to make imports available during compile time. See the following example:
+
 `````
 mkdir lib1
 cd lib1
