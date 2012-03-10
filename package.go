@@ -194,7 +194,7 @@ func (p *Package) WriteManifest() {
 	if err != nil {
 		p.logger.Fatal("Failed to write manifest file")
 	}
-	p.logger.Debug(" * Wrote manifest to " + filepath.Join(p.root, p.tag, "manifest"))
+	//p.logger.Debug(" * Wrote manifest to " + filepath.Join(p.root, p.tag, "manifest"))
 }
 
 func (p *Package) PrettyLog(buf[] byte) string {
@@ -246,13 +246,14 @@ func (p *Package) Build() bool {
 		}
 	}
 
-	p.WriteManifest()
-	
 	os.Setenv("BUILD_NUMBER", old_build_number)
 
 	p.logger.Debug(" * Installing", p.name + "-" + p.tag + "...")
 
 	os.MkdirAll(filepath.Join(p.root, p.tag), 0775)
+
+	p.WriteManifest()
+
 	err = FileCopy(tmp_src_dir, filepath.Join(p.root, p.tag, "src"))
 	if err != nil {
 		p.logger.Fatal("Failed to copy source to install folder")
