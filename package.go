@@ -190,7 +190,10 @@ func (p *Package) WriteManifest() {
 	for _, pkg := range p.deps {
 		manifest += "pkg " + pkg.name + " " + pkg.tag + "\n"
 	}
-	ioutil.WriteFile(filepath.Join(p.root, p.tag, "manifest"), []byte(manifest), 0664)
+	err := ioutil.WriteFile(filepath.Join(p.root, p.tag, "manifest"), []byte(manifest), 0664)
+	if err != nil {
+		p.logger.Fatal("Failed to write manifest file")
+	}
 	p.logger.Debug(" * Wrote manifest to " + filepath.Join(p.root, p.tag, "manifest"))
 }
 
