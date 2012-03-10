@@ -191,6 +191,7 @@ func (p *Package) WriteManifest() {
 		manifest += "pkg " + pkg.name + " " + pkg.tag + "\n"
 	}
 	ioutil.WriteFile(filepath.Join(p.root, p.tag, "manifest"), []byte(manifest), 0664)
+	p.logger.Debug(" * Wrote manifest to " + filepath.Join(p.root, p.tag, "manifest"))
 }
 
 func (p *Package) PrettyLog(buf[] byte) string {
