@@ -48,6 +48,7 @@ func (gpkg *Gpkg) printUsage() {
 	logger.Info("  build     - Build a package in the current directory")
 	logger.Info("  sources   - List/Add/Remove sources for packages")
 	logger.Info("  graph     - Generate dot graph output using the current directory")
+	logger.Info("  version   - Print the gpkg version")
 }
 
 func main() {
@@ -77,6 +78,8 @@ func main() {
 		gpkg.sources()
 	} else if command == "graph" {
 		gpkg.graph()
+	} else if command == "version" {
+		logger.Info("0.0.1")
 	} else if command == "help" {
 		logger.Message("The following commands are available:")
 		gpkg.printUsage()
