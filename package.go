@@ -227,7 +227,17 @@ func (p *Package) Build() bool {
 	os.Setenv("BUILD_NUMBER", p.tag)
 	_, err := os.Open("Makefile.gvm")
 	if err == nil {
-		out, err := exec.Command("make", "-f", "Makefile.gvm").CombinedOutput()
+		// Clean using gpkg Makefile
+		out, err := exec.Command("make", "-f", "Makefile.gvm", "clean").CombinedOutput()
+		if err != nil {
+			p.logger.Error("Failed to clean with Makefile.gvm")
+			p.logger.Error(p.PrettyLog(out))
+			return false
+		} else {
+			p.logger.Debug(p.PrettyLog(out))
+		}
+		// Build using gpkg Makefile
+		out, err = exec.Command("make", "-f", "Makefile.gvm").CombinedOutput()
 		if err != nil {
 			p.logger.Error("Failed to build with Makefile.gvm")
 			p.logger.Error(p.PrettyLog(out))
@@ -235,10 +245,31 @@ func (p *Package) Build() bool {
 		} else {
 			p.logger.Debug(p.PrettyLog(out))
 		}
+		// Run tests using gpkg Makefile
+		p.logger.Debug(" * Testing", p.name, p.tag)
+		out, err = exec.Command("make", "-f", "Makefile.gvm", "test").CombinedOutput()
+		if err != nil {
+			p.logger.Error("Tests failed!")
+			p.logger.Error(p.PrettyLog(out))
+			return false
+		} else {
+			p.logger.Debug(p.PrettyLog(out))
+		}
 	} else {
-		out, err := exec.Command("gb", "-bi").CombinedOutput()
+		// Build using gb
+		out, err := exec.Command("gb", "-cbi").CombinedOutput()
 		if err != nil {
 			p.logger.Error("Failed to build with gb")
+			p.logger.Error(p.PrettyLog(out))
+			return false
+		} else {
+			p.logger.Debug(p.PrettyLog(out))
+		}
+		// Run tests using gb
+		p.logger.Debug(" * Testing", p.name, p.tag)
+		out, err = exec.Command("gb", "-t").CombinedOutput()
+		if err != nil {
+			p.logger.Error("gb Tests failed!")
 			p.logger.Error(p.PrettyLog(out))
 			return false
 		} else {
@@ -250,6 +281,10 @@ func (p *Package) Build() bool {
 
 	p.logger.Debug(" * Installing", p.name + "-" + p.tag + "...")
 
+	err = os.RemoveAll(filepath.Join(p.root, p.tag))
+	if err != nil {
+		p.logger.Fatal("Failed to remove old version")
+	}
 	os.MkdirAll(filepath.Join(p.root, p.tag), 0775)
 
 	p.WriteManifest()
