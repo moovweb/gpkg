@@ -17,6 +17,8 @@ type Package struct {
 	tmpdir string
 	logger *Logger
 	deps map[string]*Package
+
+	force_install bool
 }
 
 func (p *Package) String() string {
@@ -281,10 +283,17 @@ func (p *Package) Build() bool {
 
 	p.logger.Debug(" * Installing", p.name + "-" + p.tag + "...")
 
-	err = os.RemoveAll(filepath.Join(p.root, p.tag))
-	if err != nil {
-		p.logger.Fatal("Failed to remove old version")
-	}
+	if p.force_install == true {
+		err = os.RemoveAll(filepath.Join(p.root, p.tag))
+		if err != nil {
+			p.logger.Fatal("Failed to remove old version")
+		}
+	} else {
+		_, err := os.Open(filepath.Join(p.root, p.tag))
+		if err == nil {
+			p.logger.Fatal("Already installed!")
+		}
+	}	
 	os.MkdirAll(filepath.Join(p.root, p.tag), 0775)
 
 	p.WriteManifest()

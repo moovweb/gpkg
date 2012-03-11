@@ -55,6 +55,9 @@ func main() {
 	gpkg := &Gpkg{logger: logger}
 	gpkg.NewGvm()
 	gpkg.tmpdir = filepath.Join(gpkg.gvm.root, "tmp", strconv.Itoa(os.Getpid()))
+	defer func() {
+		os.RemoveAll(gpkg.tmpdir)
+	}()
 	command := readCommand()
 
 	if command == "install" {

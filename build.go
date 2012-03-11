@@ -13,7 +13,7 @@ func (gpkg *Gpkg) build() {
 		p = gvm.NewPackage(filepath.Base(wd), "")
 	}
 	p.source = wd
+	p.force_install = true
 	p.Install(gpkg.tmpdir)
-	os.RemoveAll(gpkg.tmpdir)
 	return
 }
