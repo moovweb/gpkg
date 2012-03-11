@@ -47,14 +47,20 @@ func (gvm *Gvm) RemoveSource(src string) bool {
 	}
 	src_list := strings.Split(string(data), "\n")
 	output := ""
+	found := false
 	for _, check_src := range src_list {
 		if check_src != "" && strings.TrimSpace(check_src)[0] != '#' {
 			if strings.TrimSpace(check_src) != src {
 				output += check_src + "\n"
+			} else {
+				found = true
 			}
 		} else {
 			output += check_src + "\n"
 		}
+	}
+	if found == false {
+		gvm.logger.Fatal("Source not found!")
 	}
 	err = ioutil.WriteFile(source_file, []byte(output), 0644)
 	if err != nil {
