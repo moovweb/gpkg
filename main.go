@@ -1,3 +1,5 @@
+// gpkg is the package manager for gvm
+//
 package main
 
 import "os/exec"
