@@ -1,42 +1,86 @@
-// gpkg is the package manager for gvm
-//
 package main
-
-import "os/exec"
+/*
 import "os"
+import "reflect"
+import "strings"
+import "gpkg"
+//import "strconv"
+import "path/filepath"
 
-func FileCopy(src string, dst string) (err error) {
-	_, err = exec.Command("cp", "-r", src, dst).CombinedOutput()
-	return
+type AppInterface interface {
+	Find()
 }
 
-func readCommand() string {
-	if len(os.Args) < 2 {
-		return ""
-	}
-	os.Args = os.Args[1:]
-	return os.Args[0]
+type App struct {
+	AppInterface
+	args[] string
+	config string
+	sources *gpkg.Sources
 }
 
-func main() {
-	command := readCommand()
-	logger := NewLogger("gpkg: ", INFO)
-	gvm := NewGvm(logger)
-
-	if command == "install" {
-		pkgname := readCommand()
-		if pkgname == "" {
-			logger.Fatal("Please specify package name")
-		}
-		gvm.InstallPackage(pkgname, "0.0.src")
-	} else if command == "list" {
-		pkgs := gvm.PackageList()
-		for _, pkg := range pkgs {
-			logger.Info(pkg.name, "(" + pkg.version + ")")
-		}
-	} else if command == "graph" {
-		graph()
+func (app *App) Install() {*/
+/*	name := app.readCommand()
+	spec := strings.Join(app.args[1:], " ")
+	var version *gpkg.Version
+	if spec != "" {
+		version = app.sources.FindBySpec(name, spec)
 	} else {
-		logger.Fatal("Invalid command. Please use: list, install or uninstall")
+		version = app.sources.Find(name)
 	}
+	if version == nil {
+		panic("NOOOO!")
+	}
+	builder := gpkg.NewBuilder(name, version, filepath.Join("/home/jbussdieker/Desktop", strconv.Itoa(os.Getpid())))
+	builder.Sources = app.sources
+	println(builder)*/
+//	builder.Build()
+
+/*	var p *gpkg.PackageNode
+	p = nil
+	name := app.readCommand()
+	spec := strings.Join(app.args[1:], " ")
+	if spec != "" {
+		p = app.sources.FindBySpec(name, spec)
+	} else {
+		p = app.sources.Find(name)
+	}
+	if p != nil {
+		builder := gpkg.NewBuilder(p, filepath.Join("/home/jbussdieker/Desktop", strconv.Itoa(os.Getpid())))
+		builder.Sources = app.sources
+		builder.Build()
+	} else {
+		println("Package not found")
+	}*/
+/*}
+
+func (app *App) readCommand() string {
+	if len(app.args) > 1 {
+		app.args = app.args[1:]
+		return app.args[0]
+	}
+	return ""
+}
+
+func NewApp(args[] string, config string) *App {
+	app := &App{
+		args: os.Args,
+		config: config,
+	}	
+	app.sources = gpkg.NewSources(filepath.Join(config, "sources"))
+	return app
+}
+*/
+func main() {
+/*	app := NewApp(os.Args, "/home/jbussdieker/.gvm/config")
+	command := app.readCommand()
+
+	app_interface := reflect.ValueOf(app)
+	v := app_interface.MethodByName(strings.Title(command))
+	if v.IsValid() {
+		args := make([]reflect.Value, 0) 
+		v.Call(args)
+	} else {
+		println("Invalid command")
+		os.Exit(1)
+	}*/
 }

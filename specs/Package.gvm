@@ -1,0 +1,5 @@
+:source test@source.com
+pkg library1 ~> 0.0.1
+pkg library2
+pkg library3 0.0.2
+pkg library4 > 0.0.48

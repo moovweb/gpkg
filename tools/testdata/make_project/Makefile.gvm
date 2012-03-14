@@ -1,0 +1,6 @@
+build: main.6
+	6l -o project2 main.6
+main.6: main.go
+	6g main.go
+clean:
+	rm -f *.6 project2
