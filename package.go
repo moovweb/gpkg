@@ -113,7 +113,7 @@ func (p *Package) Get() bool {
 					p.tag = "src"
 				}
 			}*/
-			p.tag = "0"
+			p.tag += ".0"
 		}
 	}	
 
