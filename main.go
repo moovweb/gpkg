@@ -81,7 +81,7 @@ func main() {
 	} else if command == "graph" {
 		gpkg.graph()
 	} else if command == "version" {
-		logger.Info("0.0.1")
+		logger.Info("0.0.2")
 	} else if command == "help" {
 		logger.Message("The following commands are available:")
 		gpkg.printUsage()
