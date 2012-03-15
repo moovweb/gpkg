@@ -102,7 +102,7 @@ func (p *Package) Get() bool {
 		if os.Getenv("BUILD_NUMBER") != "" {
 			p.tag += "." + os.Getenv("BUILD_NUMBER")
 		} else {
-			err := os.Chdir(tmp_src_dir + "/" + p.name)
+			/*err := os.Chdir(tmp_src_dir + "/" + p.name)
 			out, err := exec.Command("git", "describe", "--exact-match", "--tags", "--match", "*.*.*").CombinedOutput()
 			if err == nil {
 				p.tag = strings.TrimSpace(string(out))
@@ -112,7 +112,8 @@ func (p *Package) Get() bool {
 				} else {
 					p.tag = "src"
 				}
-			}
+			}*/
+			p.tag = "src"
 		}
 	}	
 
