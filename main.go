@@ -6,6 +6,7 @@ import "exec"
 import "os"
 import "path/filepath"
 import "strconv"
+import "strings"
 
 type Gpkg struct {
 	gvm *Gvm
@@ -13,9 +14,12 @@ type Gpkg struct {
 	tmpdir string
 }
 
-func FileCopy(src string, dst string) (err os.Error) {
-	_, err = exec.Command("cp", "-r", src, dst).CombinedOutput()
-	return
+func FileCopy(src string, dst string) os.Error {
+	out, err := exec.Command("cp", "-r", src, dst).CombinedOutput()
+	if err != nil {
+		return os.NewError(strings.TrimSpace(string(out)))
+	}
+	return nil
 }
 
 func readCommand() string {
@@ -81,7 +85,7 @@ func main() {
 	} else if command == "graph" {
 		gpkg.graph()
 	} else if command == "version" {
-		logger.Info("0.0.2")
+		logger.Info("0.0.3")
 	} else if command == "help" {
 		logger.Message("The following commands are available:")
 		gpkg.printUsage()

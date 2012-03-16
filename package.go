@@ -57,8 +57,9 @@ func (p *Package) FindSource() bool {
 	return false
 }
 
-func (p *Package) Get() bool {
+func (p *Package) Get() os.Error {
 	tmp_src_dir := filepath.Join(p.tmpdir, p.name, "src")
+	os.RemoveAll(tmp_src_dir)
 	os.MkdirAll(tmp_src_dir, 0775)
 	if p.source[0] == '/' {
 		p.logger.Debug(" * Copying", p.name)
@@ -70,13 +71,13 @@ func (p *Package) Get() bool {
 		}
 		// END TODO
 		if err != nil {
-			return false
+			return err
 		}
 	} else {
 		p.logger.Debug(" * Downloading", p.name)
 		_, err := exec.Command("git", "clone", p.source, tmp_src_dir + "/" + p.name).CombinedOutput()
 		if err != nil {
-			return false
+			return err
 		}
 	}
 
@@ -117,7 +118,7 @@ func (p *Package) Get() bool {
 		}
 	}	
 
-	return true
+	return nil
 }
 
 func (p *Package) LoadImport(dep *Package, dir string) {
@@ -330,8 +331,9 @@ func (p *Package) Install(tmpdir string) {
 			p.logger.Fatal("ERROR Couldn't find", p.name, "in any sources")
 		}
 	}
-	if !p.Get() {
-		p.logger.Fatal("ERROR Getting package source")
+	err := p.Get()
+	if err != nil {
+		p.logger.Fatal("ERROR Getting package source", err)
 	}
 	if !p.Build() {
 		p.gvm.DeletePackage(p)
