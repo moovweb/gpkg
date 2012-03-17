@@ -157,7 +157,7 @@ func (p *Package) LoadImports(dir string) bool {
 		}
 	//}
 
-	p.deps = make(map[string]*Package, 64)
+	p.deps = map[string]*Package{}
 
 	p.logger.Debug(" * Loading dependencies for", p.name)
 	for _, line := range strings.Split(string(data), "\n") {
