@@ -6,6 +6,7 @@ import "io/ioutil"
 import "path/filepath"
 import "strings"
 import "github.com/moovweb/versions"
+import . "specs"
 
 type Package struct {
 	gvm *Gvm
@@ -18,6 +19,7 @@ type Package struct {
 	logger *Logger
 	deps map[string]*Package
 
+	specs *Specs
 	force_install bool
 }
 
@@ -148,43 +150,37 @@ func (p *Package) LoadImport(dep *Package, dir string) {
 
 func (p *Package) LoadImports(dir string) bool {
 	tmp_src_dir := filepath.Join(p.tmpdir, p.name, "src")
-	//data, err := ioutil.ReadFile(filepath.Join(tmp_src_dir, p.name, "manifest"))
-	//if err != nil {
-		data, err := ioutil.ReadFile(filepath.Join(tmp_src_dir, p.name, "Package.gvm"))
-		if err != nil {
-			p.logger.Debug(" * No dependencies found")
-			return true
-		}
-	//}
+	specs, err := NewSpecs(filepath.Join(tmp_src_dir, p.name, "Package.gvm"))
+	if err != nil {
+		p.logger.Debug(" * No dependencies found")
+		return true
+	} else {
+		p.specs = specs
+	}
 
 	p.deps = map[string]*Package{}
 
 	p.logger.Debug(" * Loading dependencies for", p.name)
-	for _, line := range strings.Split(string(data), "\n") {
-		if len(line) > 3 && line[0:3] == "pkg" {
-			params := strings.Split(line, " ")
-			var dep *Package
-			version_spec := "Don't care"
-			if len(params) > 2 {
-				version_spec = params[2]
-				dep = p.gvm.FindPackageByVersion(params[1], version_spec)
-				if dep == nil {
-					dep = p.gvm.NewPackage(params[1], version_spec)
-					dep.Install(p.tmpdir)
-				}
-			} else {
-				dep = p.gvm.FindPackage(params[1])
-				if dep == nil {
-					dep = p.gvm.NewPackage(params[1], "")
-					dep.Install(p.tmpdir)
-				}
-			}
+	for name, spec := range p.specs.List() {
+		var dep *Package
+		if spec != "*" {
+			dep = p.gvm.FindPackageByVersion(name, spec)
 			if dep == nil {
-				p.logger.Fatal("ERROR: Couldn't find " + params[1] + " in any sources")
+				dep = p.gvm.NewPackage(name, spec)
+				dep.Install(p.tmpdir)
 			}
-			p.logger.Debug("    -", dep.name, dep.tag, "(Spec:", version_spec + ")")
-			p.LoadImport(dep, dir)
+		} else {
+			dep = p.gvm.FindPackage(name)
+			if dep == nil {
+				dep = p.gvm.NewPackage(name, "")
+				dep.Install(p.tmpdir)
+			}
 		}
+		if dep == nil {
+			p.logger.Fatal("ERROR: Couldn't find " + name + " in any sources")
+		}
+		p.logger.Debug("    -", dep.name, dep.tag, "(Spec:", spec + ")")
+		p.LoadImport(dep, dir)
 	}
 	return true
 }
