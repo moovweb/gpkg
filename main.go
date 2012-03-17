@@ -8,6 +8,8 @@ import "path/filepath"
 import "strconv"
 import "strings"
 
+const VERSION = "0.0.4"
+
 type Gpkg struct {
 	gvm *Gvm
 	logger *Logger
@@ -85,7 +87,7 @@ func main() {
 	} else if command == "graph" {
 		gpkg.graph()
 	} else if command == "version" {
-		logger.Info("0.0.3")
+		logger.Info(VERSION)
 	} else if command == "help" {
 		logger.Message("The following commands are available:")
 		gpkg.printUsage()
