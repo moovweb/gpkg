@@ -199,16 +199,18 @@ func (p *Package) WriteManifest() {
 	//p.logger.Debug(" * Wrote manifest to " + filepath.Join(p.root, p.tag, "manifest"))
 }
 
-func (p *Package) PrettyLog(buf string) string {
+func (p *Package) PrettyLog(buf string) (formatted string) {
 	lines := strings.Split(buf, "\n")
-	r := ""
-	for n, line := range lines {
-		r += "    : " + line
-		if n != len(lines) - 1 {
-			r += "\n"
+	for _, line := range lines {
+		if strings.TrimSpace(line) == "" {
+			continue
 		}
+		if formatted != "" {
+			formatted += "\n"
+		}
+		formatted += "    : " + line
 	}
-	return r
+	return
 }
 
 func (p *Package) Build() bool {
@@ -230,20 +232,17 @@ func (p *Package) Build() bool {
 	} else {
 		p.tool = NewGbTool(filepath.Join(tmp_src_dir, p.name))
 	}
-	p.logger.Debug(" * Cleaning")
 	out, berr := p.tool.Clean()
 	if berr != nil {
 		p.logger.Error("Failed to clean")
 		p.logger.Error(p.PrettyLog(out))
 		return false
-	} else {
-		p.logger.Debug(p.PrettyLog(out))
 	}
 	// Build using gpkg Makefile
 	p.logger.Debug(" * Building")
 	out, berr = p.tool.Build()
 	if berr != nil {
-		p.logger.Error("Failed to build")
+		p.logger.Error(berr)
 		p.logger.Error(p.PrettyLog(out))
 		return false
 	} else {
@@ -253,7 +252,7 @@ func (p *Package) Build() bool {
 	p.logger.Debug(" * Testing")
 	out, berr = p.tool.Test()
 	if berr != nil {
-		p.logger.Error("Tests failed!")
+		p.logger.Error(berr)
 		p.logger.Error(p.PrettyLog(out))
 		return false
 	} else {
@@ -263,7 +262,7 @@ func (p *Package) Build() bool {
 	p.logger.Debug(" * Installing")
 	out, berr = p.tool.Install()
 	if berr != nil {
-		p.logger.Error("Install failed!")
+		p.logger.Error(berr)
 		p.logger.Error(p.PrettyLog(out))
 		return false
 	} else {
