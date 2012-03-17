@@ -1,4 +1,4 @@
-package gpkg
+package tool
 
 import "os"
 import "exec"
@@ -9,19 +9,19 @@ type GoinstallTool struct {
 	target string
 }
 
-func NewGoinstallTool(gopath string, target string) *GoinstallTool {
+func NewGoinstallTool(gopath string, target string) Tool {
 	gopath, err := filepath.Abs(gopath)
 	if err != nil {
 		return nil
 	}
-	return &GoinstallTool{gopath:gopath, target:target}
+	return Tool(GoinstallTool{gopath:gopath, target:target})
 }
 
-func (g *GoinstallTool) Clean() (string, *ToolError) {
+func (g GoinstallTool) Clean() (string, *ToolError) {
 	return "", nil
 }
 
-func (g *GoinstallTool) Build() (string, *ToolError) {
+func (g GoinstallTool) Build() (string, *ToolError) {
 	pushd := os.Getenv("GOPATH")
 	os.Setenv("GOPATH", g.gopath)
 	out, err := exec.Command("goinstall", g.target).CombinedOutput()
@@ -32,11 +32,11 @@ func (g *GoinstallTool) Build() (string, *ToolError) {
 	return string(out), nil
 }
 
-func (g *GoinstallTool) Test() (string, *ToolError) {
+func (g GoinstallTool) Test() (string, *ToolError) {
 	return "", nil
 }
 
-func (g *GoinstallTool) Install() (string, *ToolError) {
+func (g GoinstallTool) Install() (string, *ToolError) {
 	return "", nil
 }
 

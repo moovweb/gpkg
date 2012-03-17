@@ -1,4 +1,4 @@
-package gpkg
+package tool
 
 import "os"
 import "exec"
@@ -7,8 +7,8 @@ type GBTool struct {
 	sandbox string
 }
 
-func NewGBTool(sandbox string) *GBTool {
-	return &GBTool{sandbox:sandbox}
+func NewGBTool(sandbox string) Tool {
+	return Tool(GBTool{sandbox:sandbox})
 }
 
 func (gb *GBTool) runCommand(cmd string) (string, *ToolError) {
@@ -31,19 +31,19 @@ func (gb *GBTool) runCommand(cmd string) (string, *ToolError) {
 	return string(out), nil
 }
 
-func (gb *GBTool) Clean() (string, *ToolError) {
+func (gb GBTool) Clean() (string, *ToolError) {
 	return gb.runCommand("-c")
 }
 
-func (gb *GBTool) Build() (string, *ToolError) {
+func (gb GBTool) Build() (string, *ToolError) {
 	return gb.runCommand("-b")
 }
 
-func (gb *GBTool) Test() (string, *ToolError) {
+func (gb GBTool) Test() (string, *ToolError) {
 	return gb.runCommand("-t")
 }
 
-func (gb *GBTool) Install() (string, *ToolError) {
+func (gb GBTool) Install() (string, *ToolError) {
 	return gb.runCommand("-i")
 }
 

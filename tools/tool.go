@@ -1,4 +1,4 @@
-package gpkg
+package tool
 
 type ToolError struct { msg string }
 func NewToolError(msg string) *ToolError { return &ToolError{msg:msg} }

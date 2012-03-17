@@ -1,4 +1,4 @@
-package gpkg
+package tool
 
 import "testing"
 
@@ -24,27 +24,27 @@ func testTool(tool Tool) (string, *ToolError) {
 }
 
 func TestNewTool(t *testing.T) {
-	gbtool := NewGBTool(TEST_TOOL_PROJECT_GB)
-	if gbtool == nil {
+	tool := NewGBTool(TEST_TOOL_PROJECT_GB)
+	if tool == nil {
 		t.Fatal("Failed to create tool for", TEST_TOOL_PROJECT_GB)
 	}
-	_, err := testTool(gbtool)
+	_, err := testTool(tool)
 	if err != nil {
 		t.Error(err)
 		t.Fatal("GB Test failed")
 	}
 
-	maketool := NewMakeTool(TEST_TOOL_PROJECT_MAKE, "Makefile.gvm")
-	if maketool == nil {
+	tool = NewMakeTool(TEST_TOOL_PROJECT_MAKE, "Makefile.gvm")
+	if tool == nil {
 		t.Fatal("Failed to create tool for", TEST_TOOL_PROJECT_MAKE)
 	}
-	_, err = testTool(maketool)
+	_, err = testTool(tool)
 	if err != nil {
 		t.Error(err)
 		t.Fatal("Make Test failed")
 	}
 
-	tool := NewGoinstallTool(TEST_TOOL_PROJECT_GOINSTALL, "project")
+	tool = NewGoinstallTool(TEST_TOOL_PROJECT_GOINSTALL, "project")
 	if tool == nil {
 		t.Fatal("Failed to create tool for", TEST_TOOL_PROJECT_MAKE)
 	}
@@ -54,4 +54,3 @@ func TestNewTool(t *testing.T) {
 		t.Fatal("Make Test failed")
 	}
 }
-

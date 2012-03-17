@@ -1,4 +1,4 @@
-package gpkg
+package tool
 
 import "os"
 import "exec"
@@ -8,8 +8,8 @@ type MakeTool struct {
 	filename string
 }
 
-func NewMakeTool(sandbox string, filename string) *MakeTool {
-	return &MakeTool{sandbox:sandbox, filename:filename}
+func NewMakeTool(sandbox string, filename string) Tool {
+	return Tool(MakeTool{sandbox:sandbox, filename:filename})
 }
 
 func (m *MakeTool) runCommand(cmd string) (string, *ToolError) {
@@ -32,19 +32,19 @@ func (m *MakeTool) runCommand(cmd string) (string, *ToolError) {
 	return string(out), nil
 }
 
-func (m *MakeTool) Clean() (string, *ToolError) {
+func (m MakeTool) Clean() (string, *ToolError) {
 	return m.runCommand("clean")
 }
 
-func (m *MakeTool) Build() (string, *ToolError) {
+func (m MakeTool) Build() (string, *ToolError) {
 	return m.runCommand("build")
 }
 
-func (m *MakeTool) Test() (string, *ToolError) {
+func (m MakeTool) Test() (string, *ToolError) {
 	return m.runCommand("test")
 }
 
-func (m *MakeTool) Install() (string, *ToolError) {
+func (m MakeTool) Install() (string, *ToolError) {
 	return m.runCommand("install")
 }
 
