@@ -7,6 +7,7 @@ import "path/filepath"
 import "strings"
 import "github.com/moovweb/versions"
 import . "specs"
+import . "tools"
 
 type Package struct {
 	gvm *Gvm
@@ -20,6 +21,7 @@ type Package struct {
 	deps map[string]*Package
 
 	specs *Specs
+	tool Tool
 	force_install bool
 }
 
@@ -197,8 +199,8 @@ func (p *Package) WriteManifest() {
 	//p.logger.Debug(" * Wrote manifest to " + filepath.Join(p.root, p.tag, "manifest"))
 }
 
-func (p *Package) PrettyLog(buf[] byte) string {
-	lines := strings.Split(string(buf), "\n")
+func (p *Package) PrettyLog(buf string) string {
+	lines := strings.Split(buf, "\n")
 	r := ""
 	for n, line := range lines {
 		r += "    : " + line
@@ -219,62 +221,53 @@ func (p *Package) Build() bool {
 		return false
 	}
 
-	p.logger.Debug(" * Building", p.name, p.tag)
-
-	os.Chdir(filepath.Join(tmp_src_dir, p.name))
 	os.Setenv("GOPATH", tmp_build_dir + ":" + tmp_import_dir)
 	old_build_number := os.Getenv("BUILD_NUMBER")	
 	os.Setenv("BUILD_NUMBER", p.tag)
-	_, err := os.Open("Makefile.gvm")
+	_, err := os.Open(filepath.Join(tmp_src_dir, p.name, "Makefile.gvm"))
 	if err == nil {
-		// Clean using gpkg Makefile
-		out, err := exec.Command("make", "-f", "Makefile.gvm", "clean").CombinedOutput()
-		if err != nil {
-			p.logger.Error("Failed to clean with Makefile.gvm")
-			p.logger.Error(p.PrettyLog(out))
-			return false
-		} else {
-			p.logger.Debug(p.PrettyLog(out))
-		}
-		// Build using gpkg Makefile
-		out, err = exec.Command("make", "-f", "Makefile.gvm").CombinedOutput()
-		if err != nil {
-			p.logger.Error("Failed to build with Makefile.gvm")
-			p.logger.Error(p.PrettyLog(out))
-			return false
-		} else {
-			p.logger.Debug(p.PrettyLog(out))
-		}
-		// Run tests using gpkg Makefile
-		p.logger.Debug(" * Testing", p.name, p.tag)
-		out, err = exec.Command("make", "-f", "Makefile.gvm", "test").CombinedOutput()
-		if err != nil {
-			p.logger.Error("Tests failed!")
-			p.logger.Error(p.PrettyLog(out))
-			return false
-		} else {
-			p.logger.Debug(p.PrettyLog(out))
-		}
+		p.tool = NewMakeTool(filepath.Join(tmp_src_dir, p.name), "Makefile.gvm")
 	} else {
-		// Build using gb
-		out, err := exec.Command("gb", "-cbi").CombinedOutput()
-		if err != nil {
-			p.logger.Error("Failed to build with gb")
-			p.logger.Error(p.PrettyLog(out))
-			return false
-		} else {
-			p.logger.Debug(p.PrettyLog(out))
-		}
-		// Run tests using gb
-		p.logger.Debug(" * Testing", p.name, p.tag)
-		out, err = exec.Command("gb", "-t").CombinedOutput()
-		if err != nil {
-			p.logger.Error("gb Tests failed!")
-			p.logger.Error(p.PrettyLog(out))
-			return false
-		} else {
-			p.logger.Debug(p.PrettyLog(out))
-		}
+		p.tool = NewGbTool(filepath.Join(tmp_src_dir, p.name))
+	}
+	p.logger.Debug(" * Cleaning")
+	out, berr := p.tool.Clean()
+	if berr != nil {
+		p.logger.Error("Failed to clean")
+		p.logger.Error(p.PrettyLog(out))
+		return false
+	} else {
+		p.logger.Debug(p.PrettyLog(out))
+	}
+	// Build using gpkg Makefile
+	p.logger.Debug(" * Building")
+	out, berr = p.tool.Build()
+	if berr != nil {
+		p.logger.Error("Failed to build")
+		p.logger.Error(p.PrettyLog(out))
+		return false
+	} else {
+		p.logger.Debug(p.PrettyLog(out))
+	}
+	// Run tests using gpkg Makefile
+	p.logger.Debug(" * Testing")
+	out, berr = p.tool.Test()
+	if berr != nil {
+		p.logger.Error("Tests failed!")
+		p.logger.Error(p.PrettyLog(out))
+		return false
+	} else {
+		p.logger.Debug(p.PrettyLog(out))
+	}
+	// Run tests using gpkg Makefile
+	p.logger.Debug(" * Installing")
+	out, berr = p.tool.Install()
+	if berr != nil {
+		p.logger.Error("Install failed!")
+		p.logger.Error(p.PrettyLog(out))
+		return false
+	} else {
+		p.logger.Debug(p.PrettyLog(out))
 	}
 
 	os.Setenv("BUILD_NUMBER", old_build_number)
