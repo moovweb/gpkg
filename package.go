@@ -6,8 +6,8 @@ import "io/ioutil"
 import "path/filepath"
 import "strings"
 import "github.com/moovweb/versions"
-import . "specs"
-import . "tools"
+import . "github.com/moovweb/gpkg/specs"
+import . "github.com/moovweb/gpkg/tools"
 
 type Package struct {
 	gvm *Gvm
