@@ -49,6 +49,9 @@ func (gpkg *Gpkg) NewGvm() *Gvm {
 
 func (gpkg *Gpkg) printUsage() {
 	logger := gpkg.logger
+	logger.Info("Usage: gpkg [command]")
+	logger.Info()
+	logger.Info("Commands:")
 	logger.Info("  list      - List installed packages")
 	logger.Info("  install   - Install a package")
 	logger.Info("  uninstall - Uninstall a package")
@@ -92,7 +95,7 @@ func main() {
 		logger.Message("The following commands are available:")
 		gpkg.printUsage()
 	} else {
-		logger.Error("Invalid command. Please use one of the following:")
+		logger.Error("Invalid command.")
 		gpkg.printUsage()
 	}
 }
