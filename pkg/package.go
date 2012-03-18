@@ -123,7 +123,7 @@ func (p *Package) LoadImports(dir string) bool {
 					return false
 				}
 				dep = NewPackage(p.gvm, name, v.String(), filepath.Join(p.gvm.PkgsetRoot(), "pkg.gvm", name), source, p.tmpdir, p.logger)
-				p.logger.Debug(dep)
+				p.logger.Trace(dep)
 				dep.Install("")
 				dep.root = filepath.Join(p.gvm.PkgsetRoot(), "pkg.gvm", name, v.String())
 			}
