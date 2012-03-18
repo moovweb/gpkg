@@ -113,20 +113,16 @@ func (p *Package) LoadImports(dir string) bool {
 	p.logger.Debug(" * Loading dependencies for", p.name)
 	for name, spec := range p.specs.List {
 		var dep *Package
-		found, version, source := p.gvm.FindPackage(name, spec)
+		found, version, source := p.gvm.FindPackageInCache(name, spec)
 		if found == true {
 			dep = NewPackage(p.gvm, name, version, source, NewSource(source), p.tmpdir, p.logger)
 		} else {
-			found, versions, source := p.gvm.FindSource(name, spec)
+			found, version, source := p.gvm.FindPackageInSources(name, spec)
 			if found == true {
-				v, err := NewVersionFromMatch(versions, spec)
-				if err != nil {
-					return false
-				}
-				dep = NewPackage(p.gvm, name, v.String(), filepath.Join(p.gvm.PkgsetRoot(), "pkg.gvm", name), source, p.tmpdir, p.logger)
+				dep = NewPackage(p.gvm, name, version, source, NewSource(source), p.tmpdir, p.logger)
 				p.logger.Trace(dep)
 				dep.Install("")
-				dep.root = filepath.Join(p.gvm.PkgsetRoot(), "pkg.gvm", name, v.String())
+				dep.root = filepath.Join(p.gvm.PkgsetRoot(), "pkg.gvm", name, version)
 			}
 		}
 

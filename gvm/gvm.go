@@ -121,7 +121,7 @@ func (gvm *Gvm) SourceList() []Source {
 	return gvm.sources
 }
 
-func (gvm *Gvm) FindPackage(name string, spec string) (found bool, version string, source string) {
+func (gvm *Gvm) FindPackageInCache(name string, spec string) (found bool, version string, source string) {
 	versions, verr := gvm.cache.Versions(name)
 	if verr != nil {
 		return false, "", ""
@@ -136,7 +136,22 @@ func (gvm *Gvm) FindPackage(name string, spec string) (found bool, version strin
 	return true, v.String(), filepath.Join(gvm.pkgset_root, "pkg.gvm", name, v.String())
 }
 
-func (gvm *Gvm) FindSource(name string, version string) (bool, []Version, Source) {
+func (gvm *Gvm) FindPackageInSources(name string, spec string) (found bool, version string, source_str string) {
+	found, versions, source := gvm.FindPackageSource(name)
+	if found == false {
+		return false, "", ""
+	}
+	v, err := NewVersionFromMatch(versions, spec)
+	if err != nil {
+		return false, "", ""
+	}
+	if v == nil {
+		return false, "", ""
+	}
+	return true, v.String(), source.Root()
+}
+
+func (gvm *Gvm) FindPackageSource(name string) (bool, []Version, Source) {
 	for _, source := range gvm.sources {
 		versions, err := source.Versions(name)
 		gvm.logger.Trace("FindSource: ", versions)

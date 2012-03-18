@@ -29,35 +29,16 @@ func NewGpkg(loglevel string) *Gpkg {
 	return gpkg
 }
 
-func (gpkg *Gpkg) NewPackage(name string, tag string) *Package {
-	found, _, source := gpkg.FindSource(name, tag)
-	if found == false {
-		return nil
-	}
-	p := NewPackage(gpkg.Gvm, name, tag, filepath.Join(gpkg.PkgsetRoot(), "pkg.gvm", name), source, gpkg.tmpdir, gpkg.Logger)
+func (gpkg *Gpkg) NewPackage(name string, version string, source string) *Package {
+	p := NewPackage(gpkg.Gvm, name, version, filepath.Join(gpkg.PkgsetRoot(), "pkg.gvm", name), NewSource(source), gpkg.tmpdir, gpkg.Logger)
 	return p
-}
-
-func (gpkg *Gpkg) NewPackageFromSource(name string, source string) *Package {
-	p := NewPackage(gpkg.Gvm, name, "", filepath.Join(gpkg.PkgsetRoot(), "pkg.gvm", name), NewSource(source), gpkg.tmpdir, gpkg.Logger)
-	return p
-}
-
-func (gpkg *Gpkg) FindPackageByVersion(name string, version string) *Package {
-	gpkg.Trace("name", name)
-	gpkg.Trace("version", version)
-	_, err := os.Open(filepath.Join(gpkg.PkgsetRoot(), "pkg.gvm", name, version))
-	if err == nil {
-		p := gpkg.NewPackage(name, version)
-		return p
-	}
-	return nil
 }
 
 func (gvm *Gpkg) DeletePackage(name string, version string) bool {
 	err := os.RemoveAll(filepath.Join(gvm.PkgsetRoot(), "pkg.gvm", name, version))
 	if err == nil {
-		if gvm.FindPackage(name) == nil {
+		found, _, _ := gvm.FindPackageInCache(name, "")
+		if found == false {
 			err := os.RemoveAll(filepath.Join(gvm.PkgsetRoot(), "pkg.gvm", name))
 			if err == nil {
 				return true
@@ -82,14 +63,6 @@ func (gvm *Gpkg) EmptyPackages() os.Error {
 	return os.RemoveAll(filepath.Join(gvm.PkgsetRoot(), "pkg.gvm"))
 }
 
-func (gpkg *Gpkg) FindPackage(name string) *Package {
-	found, version, source := gpkg.Gvm.FindPackage(name, "")
-	if found != true {
-		return nil
-	}
-
-	return NewPackage(gpkg.Gvm, name, version, filepath.Join(gpkg.PkgsetRoot(), "pkg.gvm", name), NewSource(source), filepath.Join(gpkg.PkgsetRoot(), "pkg.gvm", name), gpkg.Logger)
-}
 
 func (gvm *Gpkg) VersionList(name string) (list []string) {
 	out, err := exec.Command("ls", filepath.Join(gvm.PkgsetRoot(), "pkg.gvm", name)).CombinedOutput()

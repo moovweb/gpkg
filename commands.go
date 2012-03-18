@@ -17,7 +17,7 @@ func (app *App) build() {
 		app.Fatal("Failed to get parent folder")
 	}
 
-	p := app.NewPackageFromSource(name, abspath)
+	p := app.NewPackage(name, "", abspath)
 	app.Debug(p)
 	//p.force_install = true
 	p.Install("")
@@ -29,10 +29,12 @@ func (app *App) install() {
 	if name == "" {
 		app.Fatal("Please specify package name")
 	}
-	p := app.NewPackage(name, app.version)
-	if p == nil {
-		app.Fatal("Couldn't find", name, "in any sources")
+	found, version, source := app.FindPackageInSources(name, app.version)
+	if found == false {
+		app.Fatal("Couldn't find", name, app.version, "in any sources")
 	}
+
+	p := app.NewPackage(name, version, source)
 	app.Debug(p)
 	p.Install("")
 }
@@ -63,29 +65,25 @@ func (app *App) uninstall() {
 	if pkgname == "" {
 		app.Fatal("Please specify package name")
 	}
+	found, version, _ := app.FindPackageInCache(pkgname, "")
+	if found == false {
+		app.Fatal("Invalid package name")
+	}
+	found, version, _ = app.FindPackageInCache(pkgname, app.version)
+	if found == false {
+		app.Fatal("Invalid package version")
+	}
 	if app.version == "" {
-		p := app.FindPackage(pkgname)
-		if p != nil {
-			app.Trace(p)
-			if app.DeletePackages(pkgname) {
-				app.Message("Deleted", pkgname)
-			} else {
-				app.Fatal("Couldn't delete", pkgname)
-			}
+		if app.DeletePackages(pkgname) {
+			app.Message("Deleted", pkgname)
 		} else {
-			app.Fatal("Invalid package name")
+			app.Fatal("Couldn't delete", pkgname)
 		}
 	} else {
-		p := app.FindPackageByVersion(pkgname, app.version)
-		if p != nil {
-			app.Trace(p)
-			if app.DeletePackage(pkgname, app.version) {
-				app.Message("Deleted", pkgname, "version", app.version)
-			} else {
-				app.Fatal("Couldn't delete", pkgname, "version", app.version)
-			}
+		if app.DeletePackage(pkgname, version) {
+			app.Message("Deleted", pkgname, "version", version)
 		} else {
-			app.Fatal("Invalid package name or version")
+			app.Fatal("Couldn't delete", pkgname, "version", version)
 		}
 	}
 }
