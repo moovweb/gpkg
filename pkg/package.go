@@ -49,12 +49,9 @@ func (p *Package) String() string {
 		" tmpdir: " + p.tmpdir + "\n"
 }
 
-func (p *Package) Get() os.Error {
+func (p *Package) Clone() os.Error {
 	tmp_src_dir := filepath.Join(p.tmpdir, p.name, "src")
-	os.RemoveAll(tmp_src_dir)
-	os.MkdirAll(tmp_src_dir, 0775)
-	p.logger.Debug(" * Getting Source")
-	err := p.Clone(p.name, p.tag, tmp_src_dir)
+	err := p.Source.Clone(p.name, p.tag, tmp_src_dir)
 	if err != nil {
 		return err
 	}
@@ -69,17 +66,6 @@ func (p *Package) Get() os.Error {
 		if os.Getenv("BUILD_NUMBER") != "" {
 			p.tag += "." + os.Getenv("BUILD_NUMBER")
 		} else {
-			/*err := os.Chdir(tmp_src_dir + "/" + p.name)
-			out, err := exec.Command("git", "describe", "--exact-match", "--tags", "--match", "*.*.*").CombinedOutput()
-			if err == nil {
-				p.tag = strings.TrimSpace(string(out))
-			} else {
-				if p.tag != "" {
-					p.tag += ".src"
-				} else {
-					p.tag = "src"
-				}
-			}*/
 			p.tag += ".src"
 		}
 	}
@@ -174,16 +160,18 @@ func (p *Package) PrettyLog(buf string) (formatted string) {
 func (p *Package) Build() bool {
 	tmp_build_dir := filepath.Join(p.tmpdir, p.name, "build")
 	tmp_import_dir := filepath.Join(p.tmpdir, p.name, "import")
-	tmp_src_dir := filepath.Join(p.tmpdir, p.name, "src")
 
 	if !p.LoadImports(tmp_import_dir) {
 		p.logger.Error("Failed to load imports")
 		return false
 	}
 
+	p.logger.Debug(" * Building")
+
 	os.Setenv("GOPATH", tmp_build_dir+":"+tmp_import_dir)
 	old_build_number := os.Getenv("BUILD_NUMBER")
 	os.Setenv("BUILD_NUMBER", p.tag)
+
 	out, berr := p.tool.Clean()
 	if berr != nil {
 		p.logger.Error("Failed to clean")
@@ -191,8 +179,16 @@ func (p *Package) Build() bool {
 		return false
 	}
 	// Build using gpkg Makefile
-	p.logger.Debug(" * Building")
 	out, berr = p.tool.Build()
+	if berr != nil {
+		p.logger.Error(berr)
+		p.logger.Error(p.PrettyLog(out))
+		return false
+	} else {
+		p.logger.Debug(p.PrettyLog(out))
+	}
+	// Run tests using gpkg Makefile
+	out, berr = p.tool.Install()
 	if berr != nil {
 		p.logger.Error(berr)
 		p.logger.Error(p.PrettyLog(out))
@@ -210,18 +206,24 @@ func (p *Package) Build() bool {
 	} else {
 		p.logger.Debug(p.PrettyLog(out))
 	}
-	// Run tests using gpkg Makefile
-	p.logger.Debug(" * Installing")
-	out, berr = p.tool.Install()
-	if berr != nil {
-		p.logger.Error(berr)
-		p.logger.Error(p.PrettyLog(out))
-		return false
-	} else {
-		p.logger.Debug(p.PrettyLog(out))
-	}
 
 	os.Setenv("BUILD_NUMBER", old_build_number)
+	return true
+}
+
+func (p *Package) Install(tmpdir string) {
+	tmp_build_dir := filepath.Join(p.tmpdir, p.name, "build")
+	tmp_src_dir := filepath.Join(p.tmpdir, p.name, "src")
+
+	err := p.Clone()
+	if err != nil {
+		p.logger.Fatal("ERROR Getting package source", err)
+	}
+	p.tool = NewTool(tmp_src_dir)
+	if !p.Build() {
+		// TODO: p.gvm.DeletePackage(p)
+		p.logger.Fatal("ERROR Building package")
+	}
 
 	p.logger.Debug(" * Installing", p.name+"-"+p.tag+"...")
 
@@ -251,20 +253,4 @@ func (p *Package) Build() bool {
 	}
 
 	p.logger.Info("Installed", p.name, p.tag)
-	return true
-}
-
-func (p *Package) Install(tmpdir string) {
-	p.logger.Debug("Starting install of", p.name, p.tag)
-	if p.Source == nil {
-		p.logger.Fatal("No source specified")
-	}
-	err := p.Get()
-	if err != nil {
-		p.logger.Fatal("ERROR Getting package source", err)
-	}
-	if !p.Build() {
-		// TODO: p.gvm.DeletePackage(p)
-		p.logger.Fatal("ERROR Building package")
-	}
 }
