@@ -2,10 +2,10 @@ package source
 
 import "path/filepath"
 import "exec"
+import "os"
 import "strings"
 
-import . "github.com/moovweb/versions"
-
+import . "version"
 import . "util"
 
 type SourceError struct { msg string }
@@ -14,15 +14,27 @@ func (e *SourceError) String() string { return "Source Error: " + e.msg }
 
 type Source interface {
 	Root() string
-	Clone(string, string) *SourceError
+	Clone(string, string, string) *SourceError
 	Versions(string) ([]Version, *SourceError)
 }
 
 func NewSource(root string) Source {
 	if root[0] == '/' {
 		return NewLocalSource(root)
-	} else {
-		return NewGitSource(root)
+	}
+	return NewGitSource(root)
+}
+///////////////////////////////////////////
+// Common
+///////////////////////////////////////////
+func cleanDest(dest string, name string) *SourceError {
+	err := os.MkdirAll(dest, 0755)
+	if err != nil {
+		return NewSourceError(err.String())
+	}
+	err = os.RemoveAll(filepath.Join(dest, name))
+	if err != nil {
+		return NewSourceError(err.String())
 	}
 	return nil
 }
@@ -45,7 +57,8 @@ func (s GitSource) Root() string {
 	return s.root
 }
 
-func (s GitSource) Clone(name string, dest string) *SourceError {
+func (s GitSource) Clone(name string, version string, dest string) *SourceError {
+	cleanDest(dest, name)
 	src_repo := filepath.Join(s.root + "/" + name)
 	dest_dir := filepath.Join(dest, name)
 	_, err := exec.Command("git", "clone", src_repo, dest_dir).CombinedOutput()
@@ -67,8 +80,8 @@ func (s GitSource) Versions(name string) (list[] Version, err *SourceError) {
 		fields := strings.Fields(line)
 		if len(fields) > 1 {
 			if len(fields[1]) > len(GIT_TAG_PREFIX) && fields[1][:len(GIT_TAG_PREFIX)] == GIT_TAG_PREFIX {
-				version, err := NewVersion(fields[1][len(GIT_TAG_PREFIX):])
-				if version != nil && err == nil {
+				version := NewVersion(fields[1][len(GIT_TAG_PREFIX):])
+				if version != nil {
 					versions[index] = *version
 					index++
 				}
@@ -94,8 +107,9 @@ func (s LocalSource) Root() string {
 	return s.root
 }
 
-func (s LocalSource) Clone(name string, dest string) *SourceError {
-	err := FileCopy(filepath.Join(s.root, name), dest)
+func (s LocalSource) Clone(name string, version string, dest string) *SourceError {
+	cleanDest(dest, name)
+	err := FileCopy(filepath.Join(s.root, name), filepath.Join(dest, name))
 	// TODO: This is a hack to get jenkins working on multitarget installs folder name != project name
 	//if s.name != filepath.Base(dest) {
 		//p.logger.Debug(" * Rename", filepath.Join(tmp_src_dir, filepath.Base(p.source)), "to", filepath.Join(tmp_src_dir, p.name))
@@ -111,7 +125,51 @@ func (s LocalSource) Clone(name string, dest string) *SourceError {
 }
 
 func (s LocalSource) Versions(name string) (list[] Version, err *SourceError) {
-	v, _ := NewVersion("0.0.0")
-	return []Version{*v}, nil
+	// TODO: This assumes theres a test for NewVersion("0.0.0")!
+	return []Version{*NewVersion("0.0.0")}, nil
+}
+
+///////////////////////////////////////////
+// Cache SOURCE
+///////////////////////////////////////////
+type CacheSource struct {
+	root string
+}
+
+func NewCacheSource(root string) Source {
+	s := CacheSource{root:root}
+	return Source(s)
+}
+
+func (s CacheSource) Root() string {
+	return s.root
+}
+
+func (s CacheSource) Clone(name string, version string, dest string) *SourceError {
+	cleanDest(dest, name)
+	err := FileCopy(filepath.Join(s.root, name, version, "src", name), dest)
+	if err != nil {
+		return NewSourceError(err.String())
+	}
+
+	return nil
+}
+
+func (s CacheSource) Versions(name string) (list[] Version, err *SourceError) {
+	out, oserr := exec.Command("ls", filepath.Join(s.root, name)).CombinedOutput()
+	if err == nil {
+		versions := strings.Split(string(out), "\n")
+		versions = versions[0:len(versions)-1]
+		list = make([]Version, len(versions))
+		for n, version_str := range versions {
+			v := NewVersion(version_str)
+			if v == nil {
+				return []Version{}, NewSourceError("Failed to create version for install package!")
+			}
+			list[n] = *v
+		}
+		return list, nil
+	}
+	return []Version{}, NewSourceError(oserr.String())
 }
 

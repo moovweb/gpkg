@@ -5,7 +5,7 @@ import "io/ioutil"
 import "path/filepath"
 import "strings"
 
-import . "github.com/moovweb/versions"
+import . "version"
 
 import . "logger"
 import . "source"
@@ -18,6 +18,7 @@ type Gvm struct {
 	go_root string
 	pkgset_root string
 	sources []Source
+	cache Source
 	logger *Logger
 }
 
@@ -32,6 +33,7 @@ func NewGvm(logger *Logger) *Gvm {
 	if !gvm.ReadSources() {
 		gvm.logger.Fatal("Failed to read source list")
 	}
+	gvm.cache = NewCacheSource(filepath.Join(gvm.root, "pkgsets", gvm.GoName, gvm.PkgsetName, "pkg.gvm"))
 
 	return gvm
 }
@@ -142,14 +144,14 @@ func (gvm *Gvm) FindPackage(name string) (found bool, version string, source str
 			panic("No versions")
 		}
 		for _, dir := range dirs {
-			this_version, err := NewVersion(dir.Name)
-			if err != nil {
+			this_version := NewVersion(dir.Name)
+			if this_version == nil {
 				gvm.logger.Info("bad version1", dir.Name, err)
 				continue
 			}
 			if found == true {
-				current_version, err := NewVersion(version)
-				if err != nil {
+				current_version := NewVersion(version)
+				if current_version == nil {
 					gvm.logger.Info("bad version2", version, err)
 					continue
 				}
@@ -174,7 +176,7 @@ func (gvm *Gvm) FindPackage(name string) (found bool, version string, source str
 func (gvm *Gvm) FindSource(name string, version string) (bool, []Version, Source) {
 	for _, source := range gvm.sources {
 		versions, err := source.Versions(name)
-		gvm.logger.Info("FindSource: ", versions)
+		gvm.logger.Trace("FindSource: ", versions)
 		if err == nil {
 			return true, versions, source
 		}

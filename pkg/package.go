@@ -5,20 +5,21 @@ import "os"
 import "io/ioutil"
 import "path/filepath"
 import "strings"
-import "github.com/moovweb/versions"
+
+import . "gvm"
+import . "logger"
+import . "source"
+import . "version"
 import . "specs"
 import . "tools"
-import . "logger"
 import . "util"
-import . "gvm"
-import . "source"
 
 type Package struct {
 	gvm *Gvm
 	root string
 	name string
 	tag string
-	version *versions.Version
+	version *Version
 	Source
 	tmpdir string
 	logger *Logger
@@ -55,7 +56,7 @@ func (p *Package) Get() os.Error {
 	os.RemoveAll(tmp_src_dir)
 	os.MkdirAll(tmp_src_dir, 0775)
 	p.logger.Debug(" * Getting Source")
-	err := p.Clone(p.name, tmp_src_dir)
+	err := p.Clone(p.name, p.tag, tmp_src_dir)
 	if err != nil {
 		return err
 	}
@@ -68,7 +69,7 @@ func (p *Package) Get() os.Error {
 		}
 		_, err = exec.Command("git", "checkout", p.tag).CombinedOutput()
 		if err != nil {
-			p.logger.Fatal("Invalid version:", p.tag, "of", p.name, "specified")
+			p.logger.Error("Invalid version:", p.tag, "of", p.name, "specified")
 		}
 	}
 
@@ -93,9 +94,9 @@ func (p *Package) Get() os.Error {
 					p.tag = "src"
 				}
 			}*/
-			p.tag += ".0"
+			p.tag += ".src"
 		}
-	}	
+	}
 
 	return nil
 }
@@ -130,6 +131,7 @@ func (p *Package) LoadImports(dir string) bool {
 	specs, err := NewSpecs(filepath.Join(tmp_src_dir, p.name, "Package.gvm"))
 	if err != nil {
 		p.logger.Debug(" * No dependencies found")
+		p.specs = NewBlankSpecs(p.Source.Root())
 		return true
 	} else {
 		p.specs = specs
@@ -138,9 +140,9 @@ func (p *Package) LoadImports(dir string) bool {
 	p.deps = map[string]*Package{}
 
 	p.logger.Debug(" * Loading dependencies for", p.name)
-	for name, spec := range p.specs.List() {
+	for name, spec := range p.specs.List {
 		var dep *Package
-		if spec != "*" {
+		if spec != "" {
 			found, source := p.gvm.FindPackageByVersion(name, spec)
 			if found == true {
 				dep = NewPackage(p.gvm, name, spec, source, NewSource(source), p.tmpdir, p.logger)
@@ -148,12 +150,13 @@ func (p *Package) LoadImports(dir string) bool {
 		} else {
 			found, version, source := p.gvm.FindPackage(name)
 			if found == true {
+				p.specs.List[name] = version
 				dep = NewPackage(p.gvm, name, version, source, NewSource(source), p.tmpdir, p.logger)
 			}
 		}
 
 		if dep == nil {
-			p.logger.Fatal("ERROR: Couldn't find " + name + " in any sources")
+			p.logger.Fatal("ERROR: Couldn't find " + name + " " + spec + " in any sources")
 		}
 		p.logger.Debug("    -", dep.name, dep.tag, "(Spec:", spec + ")")
 		p.LoadImport(dep, dir)
@@ -162,15 +165,12 @@ func (p *Package) LoadImports(dir string) bool {
 }
 
 func (p *Package) WriteManifest() {
-	manifest := ":source " + p.Source.Root() + "\n"
-	for _, pkg := range p.deps {
-		manifest += "pkg " + pkg.name + " " + pkg.tag + "\n"
-	}
+	p.specs.Origin = p.Source.Root()
+	manifest := p.specs.String()
 	err := ioutil.WriteFile(filepath.Join(p.root, p.tag, "manifest"), []byte(manifest), 0664)
 	if err != nil {
 		p.logger.Fatal("Failed to write manifest file")
 	}
-	//p.logger.Debug(" * Wrote manifest to " + filepath.Join(p.root, p.tag, "manifest"))
 }
 
 func (p *Package) PrettyLog(buf string) (formatted string) {
