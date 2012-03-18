@@ -19,9 +19,9 @@ type Gpkg struct {
 	tmpdir string
 }
 
-func NewGpkg(loglevel int) *Gpkg {
+func NewGpkg(loglevel string) *Gpkg {
 	gpkg := &Gpkg{}
-	gpkg.Logger = NewLogger("", loglevel)
+	gpkg.Logger = NewLogger("", LevelFromString(loglevel))
 	gvm := NewGvm(gpkg.Logger)
 	gpkg.gvm = gvm
 	gpkg.tmpdir = filepath.Join(os.Getenv("GOROOT"), "tmp", strconv.Itoa(os.Getpid()))

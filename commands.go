@@ -1,8 +1,6 @@
 package main
 
-import "flag"
 import "os"
-import "fmt"
 import "path/filepath"
 //import "io/ioutil"
 //import "strings"
@@ -15,25 +13,22 @@ func (app *App) build() {
 	}
 
 	p := app.NewPackageFromSource(name, wd)
-	fmt.Println(p)
+	app.Debug(p)
 	//p.force_install = true
 	p.Install("")
 	return
 }
 
 func (app *App) install() {
-	pkgname := readCommand()
-	if pkgname == "" {
+	name := app.readCommand()
+	if name == "" {
 		app.Fatal("Please specify package name")
 	}
-
-	version := flag.String("version", "", "Package version to install")
-	flag.Parse()
-	p := app.NewPackage(pkgname, *version)
+	p := app.NewPackage(name, app.version)
 	if p == nil {
-		app.Fatal("Couldn't find", pkgname, "in any sources")
+		app.Fatal("Couldn't find", name, "in any sources")
 	}
-	fmt.Println(p)
+	app.Debug(p)
 	p.Install("")
 }
 
