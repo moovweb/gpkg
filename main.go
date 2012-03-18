@@ -35,7 +35,6 @@ func main() {
 			break
 		case "version":
 			app.Info(VERSION)
-			app.Debug("DEBUG!")
 			break
 		case "help":
 			app.Message("The following commands are available:")
