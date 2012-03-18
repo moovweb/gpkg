@@ -102,7 +102,6 @@ func (p *Package) Get() os.Error {
 }
 
 func (p *Package) LoadImport(dep *Package, dir string) {
-	//p.logger.Trace("dep", fmt.Sprint(dep))
 	if p.name == dep.name {
 		p.logger.Fatal("Packages cannot import themselves")
 	}
@@ -118,7 +117,6 @@ func (p *Package) LoadImport(dep *Package, dir string) {
 		p.deps[dep.name] = dep
 	}
 
-	//p.deps += "pkg " + dep.name + " " + dep.tag + "\n"
 	os.MkdirAll(dir, 0775)
 	err := FileCopy(filepath.Join(dep.root, "pkg"), dir)
 	if err != nil {
