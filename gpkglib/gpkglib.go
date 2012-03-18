@@ -37,7 +37,7 @@ func (gpkg *Gpkg) NewPackage(name string, tag string) *Package {
 	if found == false {
 		return nil
 	}
-	p := NewPackage(gpkg.gvm, name, tag, filepath.Join(gpkg.gvm.PkgsetRoot(), "pkg.gvm", name), source, gpkg.tmpdir, gpkg.Logger)
+	p := NewPackage(gpkg.gvm, name, tag, filepath.Join(gpkg.gvm.PkgsetRoot(), "pkg.gvm", name), source + "/" + name, gpkg.tmpdir, gpkg.Logger)
 	return p
 }
 

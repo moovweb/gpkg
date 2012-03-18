@@ -63,7 +63,7 @@ func (p *Package) Get() os.Error {
 	os.MkdirAll(tmp_src_dir, 0775)
 	if p.source[0] == '/' {
 		p.logger.Debug(" * Copying", p.name)
-		err := FileCopy(p.source + "/" + p.name, tmp_src_dir)
+		err := FileCopy(p.source, tmp_src_dir)
 		// TODO: This is a hack to get jenkins working on multitarget installs folder name != project name
 		if p.name != filepath.Base(p.source) {
 			//p.logger.Debug(" * Rename", filepath.Join(tmp_src_dir, filepath.Base(p.source)), "to", filepath.Join(tmp_src_dir, p.name))
