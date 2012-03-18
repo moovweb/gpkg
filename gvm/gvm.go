@@ -121,52 +121,19 @@ func (gvm *Gvm) SourceList() []Source {
 	return gvm.sources
 }
 
-func (gvm *Gvm) FindPackageByVersion(name string, version string) (bool, string) {
-	gvm.logger.Trace("name", name)
-	gvm.logger.Trace("version", version)
-	_, err := os.Open(filepath.Join(gvm.pkgset_root, "pkg.gvm", name, version))
-	if err == nil {
-		return true, filepath.Join(gvm.pkgset_root, "pkg.gvm", name, version)
+func (gvm *Gvm) FindPackage(name string, spec string) (found bool, version string, source string) {
+	versions, verr := gvm.cache.Versions(name)
+	if verr != nil {
+		return false, "", ""
 	}
-	return false, ""
-}
-
-func (gvm *Gvm) FindPackage(name string) (found bool, version string, source string) {
-	gvm.logger.Trace("name", name)
-	_, err := os.Open(filepath.Join(gvm.pkgset_root, "pkg.gvm", name))
-	if err == nil {
-		dirs, err := ioutil.ReadDir(filepath.Join(gvm.pkgset_root, "pkg.gvm", name))
-		if err != nil {
-			panic("No versions")
-		}
-		for _, dir := range dirs {
-			this_version := NewVersion(dir.Name)
-			if this_version == nil {
-				gvm.logger.Info("bad version1", dir.Name, err)
-				continue
-			}
-			if found == true {
-				current_version := NewVersion(version)
-				if current_version == nil {
-					gvm.logger.Info("bad version2", version, err)
-					continue
-				}
-				matched, err := this_version.Matches("> " + current_version.String())
-				if err != nil {
-					gvm.logger.Info("bad match", version, err)
-					continue
-				} else if matched == true {
-					version = dir.Name
-					source = filepath.Join(gvm.pkgset_root, "pkg.gvm", name, dir.Name)
-				}
-			} else {
-				found = true
-				version = dir.Name
-				source = filepath.Join(gvm.pkgset_root, "pkg.gvm", name, dir.Name)
-			}
-		}
+	v, err := NewVersionFromMatch(versions, spec)
+	if err != nil {
+		return false, "", ""
 	}
-	return found, version, source
+	if v == nil {
+		return false, "", ""
+	}
+	return true, v.String(), filepath.Join(gvm.pkgset_root, "pkg.gvm", name, v.String())
 }
 
 func (gvm *Gvm) FindSource(name string, version string) (bool, []Version, Source) {

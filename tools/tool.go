@@ -23,4 +23,3 @@ func NewTool(path string) Tool {
 
 	return Tool(NewGbTool(path))
 }
-

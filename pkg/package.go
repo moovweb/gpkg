@@ -112,16 +112,20 @@ func (p *Package) LoadImports(dir string) bool {
 	p.logger.Debug(" * Loading dependencies for", p.name)
 	for name, spec := range p.specs.List {
 		var dep *Package
-		if spec != "" {
-			found, source := p.gvm.FindPackageByVersion(name, spec)
-			if found == true {
-				dep = NewPackage(p.gvm, name, spec, source, NewSource(source), p.tmpdir, p.logger)
-			}
+		found, version, source := p.gvm.FindPackage(name, spec)
+		if found == true {
+			dep = NewPackage(p.gvm, name, version, source, NewSource(source), p.tmpdir, p.logger)
 		} else {
-			found, version, source := p.gvm.FindPackage(name)
+			found, versions, source := p.gvm.FindSource(name, spec)
 			if found == true {
-				p.specs.List[name] = version
-				dep = NewPackage(p.gvm, name, version, source, NewSource(source), p.tmpdir, p.logger)
+				v, err := NewVersionFromMatch(versions, spec)
+				if err != nil {
+					return false
+				}
+				dep = NewPackage(p.gvm, name, v.String(), filepath.Join(p.gvm.PkgsetRoot(), "pkg.gvm", name), source, p.tmpdir, p.logger)
+				p.logger.Debug(dep)
+				dep.Install("")
+				dep.root = filepath.Join(p.gvm.PkgsetRoot(), "pkg.gvm", name, v.String())
 			}
 		}
 
@@ -219,7 +223,7 @@ func (p *Package) Install(tmpdir string) {
 	if err != nil {
 		p.logger.Fatal("ERROR Getting package source", err)
 	}
-	p.tool = NewTool(tmp_src_dir)
+	p.tool = NewTool(filepath.Join(tmp_src_dir, p.name))
 	if !p.Build() {
 		// TODO: p.gvm.DeletePackage(p)
 		p.logger.Fatal("ERROR Building package")

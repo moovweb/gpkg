@@ -83,7 +83,7 @@ func (gvm *Gpkg) EmptyPackages() os.Error {
 }
 
 func (gpkg *Gpkg) FindPackage(name string) *Package {
-	found, version, source := gpkg.Gvm.FindPackage(name)
+	found, version, source := gpkg.Gvm.FindPackage(name, "")
 	if found != true {
 		return nil
 	}
