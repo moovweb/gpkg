@@ -8,7 +8,7 @@ import "path/filepath"
 import "strconv"
 import "strings"
 
-const VERSION = "0.0.4"
+const VERSION = "0.0.5"
 
 type Gpkg struct {
 	gvm *Gvm
