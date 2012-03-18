@@ -25,7 +25,7 @@ func NewGpkg(loglevel string) *Gpkg {
 	gpkg.Logger = NewLogger("", LevelFromString(loglevel))
 	gvm := NewGvm(gpkg.Logger)
 	gpkg.Gvm = gvm
-	gpkg.tmpdir = filepath.Join(os.Getenv("GOROOT"), "tmp", strconv.Itoa(os.Getpid()))
+	gpkg.tmpdir = filepath.Join(os.Getenv("GVM_ROOT"), "tmp", strconv.Itoa(os.Getpid()))
 	return gpkg
 }
 
