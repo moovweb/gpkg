@@ -7,14 +7,14 @@ const VERSION = "0.1.11"
 
 type App struct {
 	*Gpkg
-	args[] string
+	args    []string
 	command string
 	version string
 	pkgname string
-	fs *flag.FlagSet
+	fs      *flag.FlagSet
 }
 
-func NewApp(args[] string) *App {
+func NewApp(args []string) *App {
 	app := &App{args: args}
 	if !app.readArgs() {
 		return nil
@@ -68,4 +68,3 @@ func (app *App) printUsage() {
 	app.Info("  source    - List/Add/Remove sources for packages")
 	app.Info("  version   - Print the gpkg version")
 }
-

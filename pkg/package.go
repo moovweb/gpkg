@@ -15,28 +15,28 @@ import . "tools"
 import . "util"
 
 type Package struct {
-	gvm *Gvm
-	root string
-	name string
-	tag string
+	gvm     *Gvm
+	root    string
+	name    string
+	tag     string
 	version *Version
 	Source
 	tmpdir string
 	logger *Logger
-	deps map[string]*Package
+	deps   map[string]*Package
 
-	specs *Specs
-	tool Tool
+	specs         *Specs
+	tool          Tool
 	force_install bool
 }
 
 func NewPackage(gvm *Gvm, name string, tag string, root string, Source Source, tmpdir string, logger *Logger) *Package {
 	p := &Package{
-		root: root,
-		gvm: gvm,
+		root:   root,
+		gvm:    gvm,
 		logger: logger,
-		name: name,
-		tag: tag,
+		name:   name,
+		tag:    tag,
 		Source: Source,
 		tmpdir: tmpdir,
 	}
@@ -156,7 +156,7 @@ func (p *Package) LoadImports(dir string) bool {
 		if dep == nil {
 			p.logger.Fatal("ERROR: Couldn't find " + name + " " + spec + " in any sources")
 		}
-		p.logger.Debug("    -", dep.name, dep.tag, "(Spec:", spec + ")")
+		p.logger.Debug("    -", dep.name, dep.tag, "(Spec:", spec+")")
 		p.LoadImport(dep, dir)
 	}
 	return true
@@ -195,8 +195,8 @@ func (p *Package) Build() bool {
 		return false
 	}
 
-	os.Setenv("GOPATH", tmp_build_dir + ":" + tmp_import_dir)
-	old_build_number := os.Getenv("BUILD_NUMBER")	
+	os.Setenv("GOPATH", tmp_build_dir+":"+tmp_import_dir)
+	old_build_number := os.Getenv("BUILD_NUMBER")
 	os.Setenv("BUILD_NUMBER", p.tag)
 	_, err := os.Open(filepath.Join(tmp_src_dir, p.name, "Makefile.gvm"))
 	if err == nil {
@@ -243,13 +243,13 @@ func (p *Package) Build() bool {
 
 	os.Setenv("BUILD_NUMBER", old_build_number)
 
-	p.logger.Debug(" * Installing", p.name + "-" + p.tag + "...")
+	p.logger.Debug(" * Installing", p.name+"-"+p.tag+"...")
 
 	//if p.force_install == true {
-		err = os.RemoveAll(filepath.Join(p.root, p.tag))
-		if err != nil {
-			p.logger.Fatal("Failed to remove old version")
-		}
+	err = os.RemoveAll(filepath.Join(p.root, p.tag))
+	if err != nil {
+		p.logger.Fatal("Failed to remove old version")
+	}
 	/*} else {
 		_, err := os.Open(filepath.Join(p.root, p.tag))
 		if err == nil {

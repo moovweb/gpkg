@@ -24,4 +24,3 @@ func (v *Version) String() string {
 	}
 	return version_str
 }
-

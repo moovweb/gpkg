@@ -11,4 +11,3 @@ func FileCopy(src string, dst string) os.Error {
 	}
 	return nil
 }
-

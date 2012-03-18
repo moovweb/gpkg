@@ -30,6 +30,6 @@ func TestNewSpecs(t *testing.T) {
 		t.Fatal("Failed to read test spec file")
 	}
 	if specs.String() != string(out) {
-		t.Fatal("Render back to text didn't match", "\n" + specs.String(), "\n" + string(out))
+		t.Fatal("Render back to text didn't match", "\n"+specs.String(), "\n"+string(out))
 	}
 }

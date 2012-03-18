@@ -91,25 +91,24 @@ func (app *App) uninstall() {
 }
 
 func (app *App) list() {
-	app.Message("\ngpkg package list", app.Gvm.GoName + "@" + app.Gvm.PkgsetName, "\n")
+	app.Message("\ngpkg package list", app.Gvm.GoName+"@"+app.Gvm.PkgsetName, "\n")
 	pkgs := app.PackageList()
 	for _, pkg := range pkgs {
 		output := pkg + " ("
 		versions := app.VersionList(pkg)
 		for n, version := range versions {
 			output += version
-			if n < len(versions) - 1 {
+			if n < len(versions)-1 {
 				output += ", "
 			}
 		}
 		output += ")"
 		app.Info(output)
 	}
-	app.Message("\ngoinstall package list", app.Gvm.GoName + "@" + app.Gvm.PkgsetName, "\n")
+	app.Message("\ngoinstall package list", app.Gvm.GoName+"@"+app.Gvm.PkgsetName, "\n")
 	pkgs = app.GoinstallList()
 	for _, pkg := range pkgs {
 		app.Info(pkg)
 	}
 	app.Info()
 }
-

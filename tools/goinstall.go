@@ -14,7 +14,7 @@ func NewGoinstallTool(gopath string, target string) Tool {
 	if err != nil {
 		return nil
 	}
-	return Tool(GoinstallTool{gopath:gopath, target:target})
+	return Tool(GoinstallTool{gopath: gopath, target: target})
 }
 
 func (g GoinstallTool) Clean() (string, *ToolError) {
@@ -39,4 +39,3 @@ func (g GoinstallTool) Test() (string, *ToolError) {
 func (g GoinstallTool) Install() (string, *ToolError) {
 	return "", nil
 }
-

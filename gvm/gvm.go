@@ -11,15 +11,15 @@ import . "logger"
 import . "source"
 
 type Gvm struct {
-	GoName string
+	GoName     string
 	PkgsetName string
 
-	root string
-	go_root string
+	root        string
+	go_root     string
 	pkgset_root string
-	sources []Source
-	cache Source
-	logger *Logger
+	sources     []Source
+	cache       Source
+	logger      *Logger
 }
 
 func NewGvm(logger *Logger) *Gvm {
@@ -59,7 +59,7 @@ func (gvm *Gvm) AddSource(src string) bool {
 	if err != nil {
 		return false
 	}
-	
+
 	gvm.ReadSources()
 	return true
 }
@@ -179,4 +179,3 @@ func (gvm *Gvm) FindSource(name string, version string) (bool, []Version, Source
 	}
 	return false, []Version{}, nil
 }
-

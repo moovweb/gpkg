@@ -8,9 +8,10 @@ import "strings"
 import . "version"
 import . "util"
 
-type SourceError struct { msg string }
-func NewSourceError(msg string) *SourceError { return &SourceError{msg:msg} }
-func (e *SourceError) String() string { return "Source Error: " + e.msg }
+type SourceError struct{ msg string }
+
+func NewSourceError(msg string) *SourceError { return &SourceError{msg: msg} }
+func (e *SourceError) String() string        { return "Source Error: " + e.msg }
 
 type Source interface {
 	Root() string
@@ -49,7 +50,7 @@ type GitSource struct {
 const GIT_TAG_PREFIX = "refs/tags/"
 
 func NewGitSource(root string) Source {
-	s := GitSource{root:root}
+	s := GitSource{root: root}
 	return Source(s)
 }
 
@@ -68,8 +69,8 @@ func (s GitSource) Clone(name string, version string, dest string) *SourceError 
 	return nil
 }
 
-func (s GitSource) Versions(name string) (list[] Version, err *SourceError) {
-	out, oserr := exec.Command("git", "ls-remote", s.root + "/" + name).CombinedOutput()
+func (s GitSource) Versions(name string) (list []Version, err *SourceError) {
+	out, oserr := exec.Command("git", "ls-remote", s.root+"/"+name).CombinedOutput()
 	if oserr != nil {
 		return nil, NewSourceError(oserr.String())
 	}
@@ -99,7 +100,7 @@ type LocalSource struct {
 }
 
 func NewLocalSource(root string) Source {
-	s := LocalSource{root:root}
+	s := LocalSource{root: root}
 	return Source(s)
 }
 
@@ -112,9 +113,9 @@ func (s LocalSource) Clone(name string, version string, dest string) *SourceErro
 	err := FileCopy(filepath.Join(s.root, name), filepath.Join(dest, name))
 	// TODO: This is a hack to get jenkins working on multitarget installs folder name != project name
 	//if s.name != filepath.Base(dest) {
-		//p.logger.Debug(" * Rename", filepath.Join(tmp_src_dir, filepath.Base(p.source)), "to", filepath.Join(tmp_src_dir, p.name))
-		//os.Rename(filepath.Join(tmp_src_dir, filepath.Base(p.source)), filepath.Join(tmp_src_dir, p.name))
-		//return NewSourceError("TODO: Fix package rename at install")
+	//p.logger.Debug(" * Rename", filepath.Join(tmp_src_dir, filepath.Base(p.source)), "to", filepath.Join(tmp_src_dir, p.name))
+	//os.Rename(filepath.Join(tmp_src_dir, filepath.Base(p.source)), filepath.Join(tmp_src_dir, p.name))
+	//return NewSourceError("TODO: Fix package rename at install")
 	//}
 	// END TODO
 	if err != nil {
@@ -124,7 +125,7 @@ func (s LocalSource) Clone(name string, version string, dest string) *SourceErro
 	return nil
 }
 
-func (s LocalSource) Versions(name string) (list[] Version, err *SourceError) {
+func (s LocalSource) Versions(name string) (list []Version, err *SourceError) {
 	// TODO: This assumes theres a test for NewVersion("0.0.0")!
 	return []Version{*NewVersion("0.0.0")}, nil
 }
@@ -137,7 +138,7 @@ type CacheSource struct {
 }
 
 func NewCacheSource(root string) Source {
-	s := CacheSource{root:root}
+	s := CacheSource{root: root}
 	return Source(s)
 }
 
@@ -155,11 +156,11 @@ func (s CacheSource) Clone(name string, version string, dest string) *SourceErro
 	return nil
 }
 
-func (s CacheSource) Versions(name string) (list[] Version, err *SourceError) {
+func (s CacheSource) Versions(name string) (list []Version, err *SourceError) {
 	out, oserr := exec.Command("ls", filepath.Join(s.root, name)).CombinedOutput()
 	if err == nil {
 		versions := strings.Split(string(out), "\n")
-		versions = versions[0:len(versions)-1]
+		versions = versions[0 : len(versions)-1]
 		list = make([]Version, len(versions))
 		for n, version_str := range versions {
 			v := NewVersion(version_str)
@@ -172,4 +173,3 @@ func (s CacheSource) Versions(name string) (list[] Version, err *SourceError) {
 	}
 	return []Version{}, NewSourceError(oserr.String())
 }
-

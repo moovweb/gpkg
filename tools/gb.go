@@ -8,7 +8,7 @@ type GbTool struct {
 }
 
 func NewGbTool(sandbox string) Tool {
-	return Tool(GbTool{sandbox:sandbox})
+	return Tool(GbTool{sandbox: sandbox})
 }
 
 func (gb GbTool) runCommand(cmd string) (string, *ToolError) {
@@ -46,4 +46,3 @@ func (gb GbTool) Test() (string, *ToolError) {
 func (gb GbTool) Install() (string, *ToolError) {
 	return gb.runCommand("-i")
 }
-

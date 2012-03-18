@@ -4,12 +4,12 @@ import "os"
 import "exec"
 
 type MakeTool struct {
-	sandbox string
+	sandbox  string
 	filename string
 }
 
 func NewMakeTool(sandbox string, filename string) Tool {
-	return Tool(MakeTool{sandbox:sandbox, filename:filename})
+	return Tool(MakeTool{sandbox: sandbox, filename: filename})
 }
 
 func (m MakeTool) runCommand(cmd string) (string, *ToolError) {
@@ -47,4 +47,3 @@ func (m MakeTool) Test() (string, *ToolError) {
 func (m MakeTool) Install() (string, *ToolError) {
 	return m.runCommand("install")
 }
-

@@ -43,7 +43,6 @@ func (gpkg *Gpkg) NewPackageFromSource(name string, source string) *Package {
 	return p
 }
 
-
 func (gpkg *Gpkg) FindPackageByVersion(name string, version string) *Package {
 	gpkg.Trace("name", name)
 	gpkg.Trace("version", version)
@@ -92,11 +91,11 @@ func (gpkg *Gpkg) FindPackage(name string) *Package {
 	return NewPackage(gpkg.Gvm, name, version, filepath.Join(gpkg.PkgsetRoot(), "pkg.gvm", name), NewSource(source), filepath.Join(gpkg.PkgsetRoot(), "pkg.gvm", name), gpkg.Logger)
 }
 
-func (gvm *Gpkg) VersionList(name string) (list[] string) {
+func (gvm *Gpkg) VersionList(name string) (list []string) {
 	out, err := exec.Command("ls", filepath.Join(gvm.PkgsetRoot(), "pkg.gvm", name)).CombinedOutput()
 	if err == nil {
 		pkgs := strings.Split(string(out), "\n")
-		pkgs = pkgs[0:len(pkgs)-1]
+		pkgs = pkgs[0 : len(pkgs)-1]
 		list = make([]string, len(pkgs))
 		for n, pkg := range pkgs {
 			list[n] = pkg
@@ -106,11 +105,11 @@ func (gvm *Gpkg) VersionList(name string) (list[] string) {
 	return []string{}
 }
 
-func (gvm *Gpkg) GoinstallList() (list[] string) {
+func (gvm *Gpkg) GoinstallList() (list []string) {
 	out, err := ioutil.ReadFile(filepath.Join(gvm.PkgsetRoot(), "goinstall.log"))
 	if err == nil {
 		pkgs := strings.Split(string(out), "\n")
-		pkgs = pkgs[0:len(pkgs)-1]
+		pkgs = pkgs[0 : len(pkgs)-1]
 		list = make([]string, len(pkgs))
 		for n, pkg := range pkgs {
 			list[n] = pkg
@@ -120,11 +119,11 @@ func (gvm *Gpkg) GoinstallList() (list[] string) {
 	return []string{}
 }
 
-func (gvm *Gpkg) PackageList() (list[] string) {
+func (gvm *Gpkg) PackageList() (list []string) {
 	out, err := exec.Command("ls", filepath.Join(gvm.PkgsetRoot(), "pkg.gvm")).CombinedOutput()
 	if err == nil {
 		pkgs := strings.Split(string(out), "\n")
-		pkgs = pkgs[0:len(pkgs)-1]
+		pkgs = pkgs[0 : len(pkgs)-1]
 		list = make([]string, len(pkgs))
 		for n, pkg := range pkgs {
 			list[n] = pkg
@@ -137,4 +136,3 @@ func (gvm *Gpkg) PackageList() (list[] string) {
 func (gpkg *Gpkg) Close() {
 	os.RemoveAll(gpkg.tmpdir)
 }
-
