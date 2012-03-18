@@ -4,6 +4,7 @@ import "fmt"
 import "os"
 import "runtime"
 import "path"
+import "strings"
 
 type Logger struct {
 	name string
@@ -30,6 +31,22 @@ func NewLogger(name string, level int) *Logger {
 	return &Logger{name: name, level: level}
 }
 
+func LevelFromString(level string) int {
+	switch strings.ToUpper(level) {
+		case "FATAL":
+			return FATAL
+		case "ERROR":
+			return ERROR
+		case "DEBUG":
+			return DEBUG
+		case "INFO":
+			return INFO
+		case "TRACE":
+			return TRACE
+	}
+	return -1
+}
+
 func levelString(level int) string {
 	switch level {
 		case FATAL:
@@ -40,6 +57,8 @@ func levelString(level int) string {
 			return "DEBUG"
 		case INFO:
 			return " INFO"
+		case TRACE:
+			return "TRACE"
 	}
 	return ""
 }
@@ -78,14 +97,14 @@ func (log *Logger) Debug(msg ...interface{}) {
 	log.print(os.Stdout, DEBUG, buf)
 }
 
-func (log *Logger) Trace(name string, value string, msg ...interface{}) {
+func (log *Logger) Trace(msg ...interface{}) {
 	buf := fmt.Sprintln(msg...)
 	
 	pc, file, line, _ := runtime.Caller(1)
 	fnc := runtime.FuncForPC(pc)
-	stacktrace := fmt.Sprintf("%s:%d:%s:%v=%v", path.Base(file), line, fnc.Name(), name, value)
+	stacktrace := fmt.Sprintf("%s:%d:%s", path.Base(file), line, fnc.Name())
 
-	buf = fmt.Sprintf("=== TRACE: %s === %s", stacktrace, buf)
+	buf = fmt.Sprintf("=== TRACE: %s === \n%s===============\n", stacktrace, buf)
 	log.print(os.Stdout, TRACE, buf)
 }
 
