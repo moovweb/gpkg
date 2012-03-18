@@ -3,7 +3,7 @@ package main
 import "flag"
 import . "gpkglib"
 
-const VERSION = "0.1.7"
+const VERSION = "0.1.8"
 
 type App struct {
 	*Gpkg
