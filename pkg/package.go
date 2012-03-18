@@ -1,6 +1,5 @@
 package pkg
 
-import "exec"
 import "os"
 import "io/ioutil"
 import "path/filepath"
@@ -25,9 +24,8 @@ type Package struct {
 	logger *Logger
 	deps   map[string]*Package
 
-	specs         *Specs
-	tool          Tool
-	force_install bool
+	specs *Specs
+	tool  Tool
 }
 
 func NewPackage(gvm *Gvm, name string, tag string, root string, Source Source, tmpdir string, logger *Logger) *Package {
@@ -59,18 +57,6 @@ func (p *Package) Get() os.Error {
 	err := p.Clone(p.name, p.tag, tmp_src_dir)
 	if err != nil {
 		return err
-	}
-
-	if p.tag != "" {
-		p.logger.Debug(" * Checking out ", p.tag)
-		err := os.Chdir(tmp_src_dir + "/" + p.name)
-		if err != nil {
-			p.logger.Fatal("Unable to chdir to checkout version", p.tag, "of", p.name)
-		}
-		_, err = exec.Command("git", "checkout", p.tag).CombinedOutput()
-		if err != nil {
-			p.logger.Error("Invalid version:", p.tag, "of", p.name, "specified")
-		}
 	}
 
 	if p.tag == "" {
@@ -245,17 +231,11 @@ func (p *Package) Build() bool {
 
 	p.logger.Debug(" * Installing", p.name+"-"+p.tag+"...")
 
-	//if p.force_install == true {
 	err = os.RemoveAll(filepath.Join(p.root, p.tag))
 	if err != nil {
 		p.logger.Fatal("Failed to remove old version")
 	}
-	/*} else {
-		_, err := os.Open(filepath.Join(p.root, p.tag))
-		if err == nil {
-			p.logger.Fatal("Already installed!")
-		}
-	}*/
+
 	os.MkdirAll(filepath.Join(p.root, p.tag), 0775)
 
 	p.WriteManifest()
