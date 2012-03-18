@@ -184,12 +184,6 @@ func (p *Package) Build() bool {
 	os.Setenv("GOPATH", tmp_build_dir+":"+tmp_import_dir)
 	old_build_number := os.Getenv("BUILD_NUMBER")
 	os.Setenv("BUILD_NUMBER", p.tag)
-	_, err := os.Open(filepath.Join(tmp_src_dir, p.name, "Makefile.gvm"))
-	if err == nil {
-		p.tool = NewMakeTool(filepath.Join(tmp_src_dir, p.name), "Makefile.gvm")
-	} else {
-		p.tool = NewGbTool(filepath.Join(tmp_src_dir, p.name))
-	}
 	out, berr := p.tool.Clean()
 	if berr != nil {
 		p.logger.Error("Failed to clean")
