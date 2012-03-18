@@ -81,6 +81,10 @@ func (gvm *Gpkg) DeletePackages(name string) bool {
 	return false
 }
 
+func (gvm *Gpkg) EmptyPackages() os.Error {
+	return os.RemoveAll(filepath.Join(gvm.PkgsetRoot(), "pkg.gvm"))
+}
+
 func (gvm *Gpkg) FindPackage(name string) *Package {
 	var p *Package
 	var tag string

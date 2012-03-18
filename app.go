@@ -40,23 +40,22 @@ func (app *App) skipCommands() []string {
 
 func (app *App) readArgs() bool {
 	app.command = app.readCommand()
-	app.fs = flag.NewFlagSet("gpkg", flag.ContinueOnError)
+	app.fs = flag.NewFlagSet("gpkg [command]", flag.ContinueOnError)
 	log_level := app.fs.String("log", "DEBUG", "Log Level")
 	if app.command == "install" || app.command == "uninstall" {
 		app.fs.StringVar(&app.version, "version", "", "Package version to install")
 	}
 	err := app.fs.Parse(app.skipCommands())
+	app.Gpkg = NewGpkg(*log_level)
 	if err != nil {
+		app.Info("Commands:")
+		app.printUsage()
 		return false
 	}
-	app.Gpkg = NewGpkg(*log_level)
 	return true
 }
 
 func (app *App) printUsage() {
-	app.Info("Usage: gpkg [command]")
-	app.Info()
-	app.Info("Commands:")
 	app.Info("  list      - List installed packages")
 	app.Info("  install   - Install a package")
 	app.Info("  uninstall - Uninstall a package")

@@ -22,7 +22,12 @@ func main() {
 			app.uninstall()
 			break
 		case "empty":
-			//os.RemoveAll(filepath.Join(app.PkgsetRoot(), "pkg.gvm"))
+			err := app.EmptyPackages()
+			if err != nil {
+				app.Fatal("Failed to delete packages\n", err)
+			} else {
+				app.Message("Packages emptied")
+			}
 			break
 		case "build":
 			app.build()
@@ -36,13 +41,15 @@ func main() {
 		case "version":
 			app.Info(VERSION)
 			break
-		case "help":
-			app.Message("The following commands are available:")
-			app.printUsage()
-			break
 		default:
-			app.Error("Invalid command.")
+			app.Info("Usage: gpkg [command]")
+			app.Info()
+			app.Info("Commands:")
 			app.printUsage()
+			if app.command != "" {
+				app.Error("\nInvalid command (" + app.command + ")")
+			}
+			app.Info()
 			break
 	}
 }
