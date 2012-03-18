@@ -1,4 +1,4 @@
-package main
+package pkg
 
 import "exec"
 import "os"
@@ -8,6 +8,9 @@ import "strings"
 import "github.com/moovweb/versions"
 import . "specs"
 import . "tools"
+import . "logger"
+import . "util"
+import . "gvm"
 
 type Package struct {
 	gvm *Gvm
@@ -25,11 +28,24 @@ type Package struct {
 	force_install bool
 }
 
+func NewPackage(gvm *Gvm, name string, tag string, root string, source string, tmpdir string, logger *Logger) *Package {
+	return &Package{
+		root: root,
+		gvm: gvm,
+		logger: logger,
+		name: name,
+		tag: tag,
+		source: source,
+		tmpdir: tmpdir,
+	}
+}
+
 func (p *Package) String() string {
 	return "   root: " + p.root + "\n" +
 		"   name: " + p.name + "\n" +
 		"    tag: " + p.tag + "\n" +
-		" source: " + p.source + "\n"
+		" source: " + p.source + "\n" +
+		" tmpdir: " + p.tmpdir + "\n"
 }
 
 func (p *Package) GetVersions() []string {
@@ -41,33 +57,13 @@ func (p *Package) GetVersions() []string {
 	return versions
 }
 
-func (p *Package) FindSource() bool {
-	for _, source := range p.gvm.sources {
-		src := source.root + "/" + p.name
-		if src[0] == '/' {
-			_, err := os.Open(src)
-			if err == nil {
-				p.source = src
-				return true
-			}
-		} else {
-			_, err := exec.Command("git", "ls-remote", src).CombinedOutput()
-			if err == nil {
-				p.source = src
-				return true
-			}
-		}
-	}
-	return false
-}
-
 func (p *Package) Get() os.Error {
 	tmp_src_dir := filepath.Join(p.tmpdir, p.name, "src")
 	os.RemoveAll(tmp_src_dir)
 	os.MkdirAll(tmp_src_dir, 0775)
 	if p.source[0] == '/' {
 		p.logger.Debug(" * Copying", p.name)
-		err := FileCopy(p.source, tmp_src_dir)
+		err := FileCopy(p.source + "/" + p.name, tmp_src_dir)
 		// TODO: This is a hack to get jenkins working on multitarget installs folder name != project name
 		if p.name != filepath.Base(p.source) {
 			//p.logger.Debug(" * Rename", filepath.Join(tmp_src_dir, filepath.Base(p.source)), "to", filepath.Join(tmp_src_dir, p.name))
@@ -79,9 +75,9 @@ func (p *Package) Get() os.Error {
 		}
 	} else {
 		p.logger.Debug(" * Downloading", p.name)
-		_, err := exec.Command("git", "clone", p.source, tmp_src_dir + "/" + p.name).CombinedOutput()
+		out, err := exec.Command("git", "clone", p.source + "/" + p.name, tmp_src_dir + "/" + p.name).CombinedOutput()
 		if err != nil {
-			return err
+			return os.NewError(err.String() + "\n" + string(out))
 		}
 	}
 
@@ -144,9 +140,9 @@ func (p *Package) LoadImport(dep *Package, dir string) {
 
 	//p.deps += "pkg " + dep.name + " " + dep.tag + "\n"
 	os.MkdirAll(dir, 0775)
-	err := FileCopy(filepath.Join(dep.root, dep.tag, "pkg"), dir)
+	err := FileCopy(filepath.Join(dep.root, "pkg"), dir)
 	if err != nil {
-		p.logger.Fatal("ERROR: Couldn't load import: " + dep.name)
+		p.logger.Fatal("ERROR: Couldn't load import: " + dep.name + "\n" + err.String())
 	}
 }
 
@@ -166,18 +162,17 @@ func (p *Package) LoadImports(dir string) bool {
 	for name, spec := range p.specs.List() {
 		var dep *Package
 		if spec != "*" {
-			dep = p.gvm.FindPackageByVersion(name, spec)
-			if dep == nil {
-				dep = p.gvm.NewPackage(name, spec)
-				dep.Install(p.tmpdir)
+			found, source := p.gvm.FindPackageByVersion(name, spec)
+			if found == true {
+				dep = NewPackage(p.gvm, name, spec, source, source, p.tmpdir, p.logger)
 			}
 		} else {
-			dep = p.gvm.FindPackage(name)
-			if dep == nil {
-				dep = p.gvm.NewPackage(name, "")
-				dep.Install(p.tmpdir)
+			found, version, source := p.gvm.FindPackage(name)
+			if found == true {
+				dep = NewPackage(p.gvm, name, version, source, source, p.tmpdir, p.logger)
 			}
 		}
+
 		if dep == nil {
 			p.logger.Fatal("ERROR: Couldn't find " + name + " in any sources")
 		}
@@ -299,7 +294,7 @@ func (p *Package) Build() bool {
 	}
 
 	err = FileCopy(filepath.Join(tmp_build_dir, "bin"), filepath.Join(p.root, p.tag, "bin"))
-	err = FileCopy(filepath.Join(tmp_build_dir, "bin"), filepath.Join(p.gvm.pkgset_root))
+	// TODO: err = FileCopy(filepath.Join(tmp_build_dir, "bin"), filepath.Join(p.gvm.pkgset_root))
 	if err == nil {
 		p.logger.Debug(" * Installed binaries")
 	}
@@ -309,22 +304,16 @@ func (p *Package) Build() bool {
 }
 
 func (p *Package) Install(tmpdir string) {
-	p.tmpdir = tmpdir
 	p.logger.Debug("Starting install of", p.name, p.tag)
 	if p.source == "" {
-		if !p.FindSource() {
-			if p.tag != "" {
-				p.logger.Fatal("ERROR Couldn't find", p.name, "(" + p.tag + ")", "in any sources")
-			}
-			p.logger.Fatal("ERROR Couldn't find", p.name, "in any sources")
-		}
+		p.logger.Fatal("No source specified")
 	}
 	err := p.Get()
 	if err != nil {
 		p.logger.Fatal("ERROR Getting package source", err)
 	}
 	if !p.Build() {
-		p.gvm.DeletePackage(p)
+		// TODO: p.gvm.DeletePackage(p)
 		p.logger.Fatal("ERROR Building package")
 	}
 }

@@ -2,26 +2,15 @@
 //
 package main
 
-import "exec"
 import "os"
-import "path/filepath"
-import "strconv"
-import "strings"
 
-const VERSION = "0.0.5"
+import . "gpkglib"
+import . "logger"
 
-type Gpkg struct {
-	gvm *Gvm
-	logger *Logger
-	tmpdir string
-}
+const VERSION = "0.0.6"
 
-func FileCopy(src string, dst string) os.Error {
-	out, err := exec.Command("cp", "-r", src, dst).CombinedOutput()
-	if err != nil {
-		return os.NewError(strings.TrimSpace(string(out)))
-	}
-	return nil
+type App struct {
+	*Gpkg
 }
 
 func readCommand() string {
@@ -32,71 +21,47 @@ func readCommand() string {
 	return os.Args[0]
 }
 
-func (gpkg *Gpkg) NewGvm() *Gvm {
-	gpkg.gvm = &Gvm{logger: gpkg.logger}
-	gpkg.gvm.root = os.Getenv("GVM_ROOT")
-	gpkg.gvm.go_name = os.Getenv("gvm_go_name")
-	gpkg.gvm.go_root = filepath.Join(gpkg.gvm.root, "gos", gpkg.gvm.go_name)
-	gpkg.gvm.pkgset_name = os.Getenv("gvm_pkgset_name")
-	gpkg.gvm.pkgset_root = filepath.Join(gpkg.gvm.root, "pkgsets", gpkg.gvm.go_name, gpkg.gvm.pkgset_name)
-
-	if !gpkg.gvm.ReadSources() {
-		gpkg.gvm.logger.Fatal("Failed to read source list")
-	}
-
-	return gpkg.gvm
-}
-
-func (gpkg *Gpkg) printUsage() {
-	logger := gpkg.logger
-	logger.Info("Usage: gpkg [command]")
-	logger.Info()
-	logger.Info("Commands:")
-	logger.Info("  list      - List installed packages")
-	logger.Info("  install   - Install a package")
-	logger.Info("  uninstall - Uninstall a package")
-	logger.Info("  empty     - Clear out all installed packages")
-	logger.Info("  build     - Build a package in the current directory")
-	logger.Info("  sources   - List/Add/Remove sources for packages")
-	logger.Info("  graph     - Generate dot graph output using the current directory")
-	logger.Info("  version   - Print the gpkg version")
+func (app *App) printUsage() {
+	app.Info("Usage: gpkg [command]")
+	app.Info()
+	app.Info("Commands:")
+	app.Info("  list      - List installed packages")
+	app.Info("  install   - Install a package")
+	app.Info("  uninstall - Uninstall a package")
+	app.Info("  empty     - Clear out all installed packages")
+	app.Info("  build     - Build a package in the current directory")
+	app.Info("  sources   - List/Add/Remove sources for packages")
+	app.Info("  version   - Print the gpkg version")
 }
 
 func main() {
-	logger := NewLogger("", DEBUG)
-	gpkg := &Gpkg{logger: logger}
-	gpkg.NewGvm()
-	gpkg.tmpdir = filepath.Join(gpkg.gvm.root, "tmp", strconv.Itoa(os.Getpid()))
-	defer func() {
-		os.RemoveAll(gpkg.tmpdir)
-	}()
+	app := App{Gpkg:NewGpkg(DEBUG)}
+	defer app.Gpkg.Close()
 	command := readCommand()
 
 	if command == "install" {
-		gpkg.install()
+		app.install()
 	} else if command == "debug" {
-		logger.Info(gpkg.gvm.FindPackage("manhattan"))
+		//logger.Info(gpkg.gvm.FindPackage("manhattan"))
 		return
 	} else if command == "uninstall" {
-		gpkg.uninstall()
+		app.uninstall()
 	} else if command == "empty" {
-		os.RemoveAll(filepath.Join(gpkg.gvm.pkgset_root, "pkg.gvm"))
+		//os.RemoveAll(filepath.Join(app.PkgsetRoot(), "pkg.gvm"))
 	} else if command == "build" {
-		gpkg.build()
+		app.build()
 	} else if command == "list" {
-		gpkg.list()
+		app.list()
 	} else if command == "sources" {
-		gpkg.sources()
-	} else if command == "graph" {
-		gpkg.graph()
+		app.sources()
 	} else if command == "version" {
-		logger.Info(VERSION)
+		app.Info(VERSION)
 	} else if command == "help" {
-		logger.Message("The following commands are available:")
-		gpkg.printUsage()
+		app.Message("The following commands are available:")
+		app.printUsage()
 	} else {
-		logger.Error("Invalid command.")
-		gpkg.printUsage()
+		app.Error("Invalid command.")
+		app.printUsage()
 	}
 }
 

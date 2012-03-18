@@ -1,4 +1,4 @@
-package main
+package gvm
 
 import "os"
 import "io/ioutil"
@@ -7,19 +7,44 @@ import "strings"
 import "exec"
 import "github.com/moovweb/versions"
 
+import . "logger"
+
 type Gvm struct {
 	root string
 	go_name string
 	go_root string
 	pkgset_name string
 	pkgset_root string
-	sources []*Source
+	sources []string
 	logger *Logger
+}
+
+func NewGvm(logger *Logger) *Gvm {
+	gvm := &Gvm{logger: logger}
+	gvm.root = os.Getenv("GVM_ROOT")
+	gvm.go_name = os.Getenv("gvm_go_name")
+	gvm.go_root = filepath.Join(gvm.root, "gos", gvm.go_name)
+	gvm.pkgset_name = os.Getenv("gvm_pkgset_name")
+	gvm.pkgset_root = filepath.Join(gvm.root, "pkgsets", gvm.go_name, gvm.pkgset_name)
+
+	if !gvm.ReadSources() {
+		gvm.logger.Fatal("Failed to read source list")
+	}
+
+	return gvm
+}
+
+func (gvm *Gvm) PkgsetRoot() string {
+	return gvm.pkgset_root
+}
+
+func (gvm *Gvm) Root() string {
+	return gvm.root
 }
 
 func (gvm *Gvm) AddSource(src string) bool {
 	for _, check_src := range gvm.sources {
-		if check_src.root == src {
+		if check_src == src {
 			gvm.logger.Fatal("Source already exists!")
 		}
 	}
@@ -75,72 +100,29 @@ func (gvm *Gvm) ReadSources() bool {
 		return false
 	}
 	src_list := strings.Split(string(data), "\n")
+	gvm.sources = []string{}
 	count := 0
 	for _, src := range src_list {
 		if src != "" && strings.TrimSpace(src)[0] != '#' {
-			count++
-		}
-	}
-	gvm.sources = make([]*Source, count)
-	count = 0
-	for _, src := range src_list {
-		if src != "" && strings.TrimSpace(src)[0] != '#' {
-			gvm.sources[count] = NewSource(strings.TrimSpace(src))
+			gvm.sources = append(make([]string, len(gvm.sources) + 1), gvm.sources...)
+			gvm.sources[count] = strings.TrimSpace(src)
 			count++
 		}
 	}
 	return true
 }
 
-func (gvm *Gvm) NewPackage(name string, tag string) *Package {
-	p := &Package{
-		gvm: gvm,
-		logger: gvm.logger,
-		name: name,
-		tag: tag,
-	}
-	p.root = filepath.Join(p.gvm.pkgset_root, "pkg.gvm", p.name)
-	return p
-}
-
-func (gvm *Gvm) FindPackageByVersion(name string, version string) *Package {
+func (gvm *Gvm) FindPackageByVersion(name string, version string) (bool, string) {
 	gvm.logger.Trace("name", name)
 	gvm.logger.Trace("version", version)
 	_, err := os.Open(filepath.Join(gvm.pkgset_root, "pkg.gvm", name, version))
 	if err == nil {
-		p := gvm.NewPackage(name, version)
-		return p
+		return true, filepath.Join(gvm.pkgset_root, "pkg.gvm", name, version)
 	}
-	return nil
+	return false, ""
 }
 
-func (gvm *Gvm) DeletePackage(p *Package) bool {
-	err := os.RemoveAll(filepath.Join(p.root, p.tag))
-	if err == nil {
-		if gvm.FindPackage(p.name) == nil {
-			err := os.RemoveAll(filepath.Join(p.root))
-			if err == nil {
-				return true
-			} else {
-				return false
-			}
-		}
-		return true
-	}
-	return false
-}
-
-func (gvm *Gvm) DeletePackages(name string) bool {
-	err := os.RemoveAll(filepath.Join(gvm.pkgset_root, "pkg.gvm", name))
-	if err == nil {
-		return true
-	}
-	return false
-}
-
-func (gvm *Gvm) FindPackage(name string) *Package {
-	var p *Package
-
+func (gvm *Gvm) FindPackage(name string) (found bool, version string, source string) {
 	gvm.logger.Trace("name", name)
 	_, err := os.Open(filepath.Join(gvm.pkgset_root, "pkg.gvm", name))
 	if err == nil {
@@ -154,38 +136,45 @@ func (gvm *Gvm) FindPackage(name string) *Package {
 				gvm.logger.Info("bad version1", dir.Name, err)
 				continue
 			}
-			if p != nil {
-				current_version, err := versions.NewVersion(p.tag)
+			if found == true {
+				current_version, err := versions.NewVersion(version)
 				if err != nil {
-					gvm.logger.Info("bad version2", p.tag, err)
+					gvm.logger.Info("bad version2", version, err)
 					continue
 				}
 				matched, err := this_version.Matches("> " + current_version.String())
 				if err != nil {
-					gvm.logger.Info("bad match", p.tag, err)
+					gvm.logger.Info("bad match", version, err)
 					continue
 				} else if matched == true {
-					p = gvm.NewPackage(name, dir.Name)
+					version = dir.Name
+					source = filepath.Join(gvm.pkgset_root, "pkg.gvm", name, dir.Name)
 				}
 			} else {
-				p = gvm.NewPackage(name, dir.Name)
+				found = true
+				version = dir.Name
+				source = filepath.Join(gvm.pkgset_root, "pkg.gvm", name, dir.Name)
 			}
 		}
 	}
-	return p
+	return found, version, source
 }
 
-func (gvm *Gvm) PackageList() (pkglist[] *Package) {
-	out, err := exec.Command("ls", filepath.Join(gvm.pkgset_root, "pkg.gvm")).CombinedOutput()
-	if err == nil {
-		pkgs := strings.Split(string(out), "\n")
-		pkgs = pkgs[0:len(pkgs)-1]
-		pkglist = make([]*Package, len(pkgs))
-		for n, pkg := range pkgs {
-			pkglist[n] = gvm.NewPackage(pkg, "")
+func (gvm *Gvm) FindSource(name string, version string) (bool, string) {
+	for _, source := range gvm.sources {
+		src := source + "/" + name
+		if src[0] == '/' {
+			_, err := os.Open(src)
+			if err == nil {
+				return true, source
+			}
+		} else {
+			_, err := exec.Command("git", "ls-remote", src).CombinedOutput()
+			if err == nil {
+				return true, source
+			}
 		}
-		return pkglist
 	}
-	return []*Package{}
+	return false, ""
 }
 
