@@ -20,7 +20,7 @@ func (app *App) build() {
 	p := app.NewPackage(name, "", abspath)
 	app.Debug(p)
 	//p.force_install = true
-	p.Install("")
+	p.Install()
 	return
 }
 
@@ -36,7 +36,7 @@ func (app *App) install() {
 
 	p := app.NewPackage(name, version, source)
 	app.Debug(p)
-	p.Install("")
+	p.Install()
 }
 
 func (app *App) source() {

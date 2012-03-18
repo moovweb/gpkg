@@ -119,9 +119,9 @@ func (p *Package) LoadImports(dir string) bool {
 		} else {
 			found, version, source := p.gvm.FindPackageInSources(name, spec)
 			if found == true {
-				dep = NewPackage(p.gvm, name, version, source, NewSource(source), p.tmpdir, p.logger)
+				dep = NewPackage(p.gvm, name, version, filepath.Join(p.gvm.PkgsetRoot(), "pkg.gvm", name), NewSource(source), p.tmpdir, p.logger)
 				p.logger.Trace(dep)
-				dep.Install("")
+				dep.Install()
 				dep.root = filepath.Join(p.gvm.PkgsetRoot(), "pkg.gvm", name, version)
 			}
 		}
@@ -212,7 +212,7 @@ func (p *Package) Build() bool {
 	return true
 }
 
-func (p *Package) Install(tmpdir string) {
+func (p *Package) Install() {
 	tmp_build_dir := filepath.Join(p.tmpdir, p.name, "build")
 	tmp_src_dir := filepath.Join(p.tmpdir, p.name, "src")
 
@@ -239,7 +239,7 @@ func (p *Package) Install(tmpdir string) {
 
 	err = FileCopy(tmp_src_dir, filepath.Join(p.root, p.tag, "src"))
 	if err != nil {
-		p.logger.Fatal("Failed to copy source to install folder")
+		p.logger.Fatal("Failed to copy source to install folder", err)
 	}
 
 	err = FileCopy(filepath.Join(tmp_build_dir, "pkg"), filepath.Join(p.root, p.tag, "pkg"))
