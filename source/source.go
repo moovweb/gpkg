@@ -70,11 +70,11 @@ func (s GitSource) Clone(name string, version string, dest string) *SourceError 
 	if version != "" {
 		err := os.Chdir(dest_dir)
 		if err != nil {
-			return NewSourceError(fmt.Sprint("Unable to chdir to checkout version", version, "of", name))
+			return NewSourceError(fmt.Sprintln("Unable to chdir to checkout version", version, "of", name))
 		}
 		_, err = exec.Command("git", "checkout", version).CombinedOutput()
 		if err != nil {
-			return NewSourceError(fmt.Sprint("Invalid version:", version, "of", name, "specified"))
+			return NewSourceError(fmt.Sprintln("Invalid version:", version, "of", name, "specified"))
 		}
 	}
 	return nil
