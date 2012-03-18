@@ -61,11 +61,11 @@ func (s GitSource) Root() string {
 
 func (s GitSource) Clone(name string, version string, dest string) *SourceError {
 	cleanDest(dest, name)
-	src_repo := filepath.Join(s.root + "/" + name)
+	src_repo := s.root + "/" + name
 	dest_dir := filepath.Join(dest, name)
-	_, err := exec.Command("git", "clone", src_repo, dest_dir).CombinedOutput()
+	out, err := exec.Command("git", "clone", src_repo, dest_dir).CombinedOutput()
 	if err != nil {
-		return NewSourceError(err.String())
+		return NewSourceError(err.String() + "\n" + string(out))
 	}
 	if version != "" {
 		err := os.Chdir(dest_dir)
