@@ -50,6 +50,7 @@ func (p *Package) String() string {
 }
 
 func (p *Package) Clone() os.Error {
+	p.logger.Info("Downloading", p.name, p.tag + "...")
 	tmp_src_dir := filepath.Join(p.tmpdir, p.name, "src")
 	err := p.Source.Clone(p.name, p.tag, tmp_src_dir)
 	if err != nil {
