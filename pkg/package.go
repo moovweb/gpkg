@@ -11,6 +11,7 @@ import . "tools"
 import . "logger"
 import . "util"
 import . "gvm"
+import . "source"
 
 type Package struct {
 	gvm *Gvm
@@ -18,7 +19,7 @@ type Package struct {
 	name string
 	tag string
 	version *versions.Version
-	source string
+	Source
 	tmpdir string
 	logger *Logger
 	deps map[string]*Package
@@ -28,23 +29,24 @@ type Package struct {
 	force_install bool
 }
 
-func NewPackage(gvm *Gvm, name string, tag string, root string, source string, tmpdir string, logger *Logger) *Package {
-	return &Package{
+func NewPackage(gvm *Gvm, name string, tag string, root string, Source Source, tmpdir string, logger *Logger) *Package {
+	p := &Package{
 		root: root,
 		gvm: gvm,
 		logger: logger,
 		name: name,
 		tag: tag,
-		source: source,
+		Source: Source,
 		tmpdir: tmpdir,
 	}
+	return p
 }
 
 func (p *Package) String() string {
 	return "   root: " + p.root + "\n" +
 		"   name: " + p.name + "\n" +
 		"    tag: " + p.tag + "\n" +
-		" source: " + p.source + "\n" +
+		" source: " + p.Source.Root() + "\n" +
 		" tmpdir: " + p.tmpdir + "\n"
 }
 
@@ -52,24 +54,10 @@ func (p *Package) Get() os.Error {
 	tmp_src_dir := filepath.Join(p.tmpdir, p.name, "src")
 	os.RemoveAll(tmp_src_dir)
 	os.MkdirAll(tmp_src_dir, 0775)
-	if p.source[0] == '/' {
-		p.logger.Debug(" * Copying", p.name)
-		err := FileCopy(p.source, tmp_src_dir)
-		// TODO: This is a hack to get jenkins working on multitarget installs folder name != project name
-		if p.name != filepath.Base(p.source) {
-			//p.logger.Debug(" * Rename", filepath.Join(tmp_src_dir, filepath.Base(p.source)), "to", filepath.Join(tmp_src_dir, p.name))
-			os.Rename(filepath.Join(tmp_src_dir, filepath.Base(p.source)), filepath.Join(tmp_src_dir, p.name))
-		}
-		// END TODO
-		if err != nil {
-			return err
-		}
-	} else {
-		p.logger.Debug(" * Downloading", p.name)
-		out, err := exec.Command("git", "clone", p.source + "/" + p.name, tmp_src_dir + "/" + p.name).CombinedOutput()
-		if err != nil {
-			return os.NewError(err.String() + "\n" + string(out))
-		}
+	p.logger.Debug(" * Getting Source")
+	err := p.Clone(p.name, tmp_src_dir)
+	if err != nil {
+		return err
 	}
 
 	if p.tag != "" {
@@ -155,12 +143,12 @@ func (p *Package) LoadImports(dir string) bool {
 		if spec != "*" {
 			found, source := p.gvm.FindPackageByVersion(name, spec)
 			if found == true {
-				dep = NewPackage(p.gvm, name, spec, source, source, p.tmpdir, p.logger)
+				dep = NewPackage(p.gvm, name, spec, source, NewSource(source), p.tmpdir, p.logger)
 			}
 		} else {
 			found, version, source := p.gvm.FindPackage(name)
 			if found == true {
-				dep = NewPackage(p.gvm, name, version, source, source, p.tmpdir, p.logger)
+				dep = NewPackage(p.gvm, name, version, source, NewSource(source), p.tmpdir, p.logger)
 			}
 		}
 
@@ -174,7 +162,7 @@ func (p *Package) LoadImports(dir string) bool {
 }
 
 func (p *Package) WriteManifest() {
-	manifest := ":source " + p.source + "\n"
+	manifest := ":source " + p.Source.Root() + "\n"
 	for _, pkg := range p.deps {
 		manifest += "pkg " + pkg.name + " " + pkg.tag + "\n"
 	}
@@ -259,17 +247,17 @@ func (p *Package) Build() bool {
 
 	p.logger.Debug(" * Installing", p.name + "-" + p.tag + "...")
 
-	if p.force_install == true {
+	//if p.force_install == true {
 		err = os.RemoveAll(filepath.Join(p.root, p.tag))
 		if err != nil {
 			p.logger.Fatal("Failed to remove old version")
 		}
-	} else {
+	/*} else {
 		_, err := os.Open(filepath.Join(p.root, p.tag))
 		if err == nil {
 			p.logger.Fatal("Already installed!")
 		}
-	}	
+	}*/
 	os.MkdirAll(filepath.Join(p.root, p.tag), 0775)
 
 	p.WriteManifest()
@@ -296,7 +284,7 @@ func (p *Package) Build() bool {
 
 func (p *Package) Install(tmpdir string) {
 	p.logger.Debug("Starting install of", p.name, p.tag)
-	if p.source == "" {
+	if p.Source == nil {
 		p.logger.Fatal("No source specified")
 	}
 	err := p.Get()

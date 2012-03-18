@@ -3,13 +3,14 @@ package main
 import "flag"
 import . "gpkglib"
 
-const VERSION = "0.1.9"
+const VERSION = "0.1.10"
 
 type App struct {
 	*Gpkg
 	args[] string
 	command string
 	version string
+	pkgname string
 	fs *flag.FlagSet
 }
 
@@ -45,6 +46,9 @@ func (app *App) readArgs() bool {
 	if app.command == "install" || app.command == "uninstall" {
 		app.fs.StringVar(&app.version, "version", "", "Package version to install")
 	}
+	if app.command == "build" {
+		app.fs.StringVar(&app.pkgname, "pkgname", "", "Name to give package being built. Default is the folder name.")
+	}
 	err := app.fs.Parse(app.skipCommands())
 	app.Gpkg = NewGpkg(*log_level)
 	if err != nil {
@@ -61,7 +65,7 @@ func (app *App) printUsage() {
 	app.Info("  uninstall - Uninstall a package")
 	app.Info("  empty     - Clear out all installed packages")
 	app.Info("  build     - Build a package in the current directory")
-	app.Info("  sources   - List/Add/Remove sources for packages")
+	app.Info("  source    - List/Add/Remove sources for packages")
 	app.Info("  version   - Print the gpkg version")
 }
 

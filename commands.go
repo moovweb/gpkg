@@ -8,11 +8,16 @@ import "path/filepath"
 func (app *App) build() {
 	wd, _ := os.Getwd()
 	name := filepath.Base(wd)
-	if len(os.Args) > 1 {
-		name = os.Args[1]
+	if app.pkgname != "" {
+		name = app.pkgname
 	}
 
-	p := app.NewPackageFromSource(name, wd)
+	abspath, err := filepath.Abs(wd + "/..")
+	if err != nil {
+		app.Fatal("Failed to get parent folder")
+	}
+
+	p := app.NewPackageFromSource(name, abspath)
 	app.Debug(p)
 	//p.force_install = true
 	p.Install("")
@@ -32,25 +37,25 @@ func (app *App) install() {
 	p.Install("")
 }
 
-func (gpkg *App) sources() {
-/*	if len(os.Args) < 2 {
-		for _, src := range gpkg.gvm.sources {
-			gpkg.logger.Info(src.root)
-		}
-		return
-	}
-
-	command := readCommand()
+func (app *App) source() {
+	command := app.readCommand()
 	if command == "add" {
-		gpkg.gvm.AddSource(os.Args[1])
-		gpkg.logger.Message("Added", os.Args[1], "to sources")
+		source := app.readCommand()
+		app.AddSource(source)
+		app.Message("Added", source, "to sources")
 	} else if command == "remove" {
-		if !gpkg.gvm.RemoveSource(os.Args[1]) {
-			gpkg.logger.Error("Couldn't remove", os.Args[1])
+		source := app.readCommand()
+		if !app.RemoveSource(source) {
+			app.Error("Couldn't remove", source)
 		}
-		gpkg.logger.Message("Removed", os.Args[1], "from sources")
+		app.Message("Removed", source, "from sources")
+	} else if command == "list" || command == "" {
+		for _, src := range app.SourceList() {
+			app.Info(src.Root())
+		}
 	} else {
-	}*/
+		app.Fatal("Invalid source command (" + command + ").\nValid choices are: add, remove, and list")
+	}
 }
 
 func (app *App) uninstall() {

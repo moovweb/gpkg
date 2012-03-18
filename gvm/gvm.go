@@ -4,10 +4,11 @@ import "os"
 import "io/ioutil"
 import "path/filepath"
 import "strings"
-import "exec"
-import "github.com/moovweb/versions"
+
+import . "github.com/moovweb/versions"
 
 import . "logger"
+import . "source"
 
 type Gvm struct {
 	GoName string
@@ -16,7 +17,7 @@ type Gvm struct {
 	root string
 	go_root string
 	pkgset_root string
-	sources []string
+	sources []Source
 	logger *Logger
 }
 
@@ -45,7 +46,7 @@ func (gvm *Gvm) Root() string {
 
 func (gvm *Gvm) AddSource(src string) bool {
 	for _, check_src := range gvm.sources {
-		if check_src == src {
+		if check_src.Root() == src {
 			gvm.logger.Fatal("Source already exists!")
 		}
 	}
@@ -101,16 +102,25 @@ func (gvm *Gvm) ReadSources() bool {
 		return false
 	}
 	src_list := strings.Split(string(data), "\n")
-	gvm.sources = []string{}
 	count := 0
 	for _, src := range src_list {
 		if src != "" && strings.TrimSpace(src)[0] != '#' {
-			gvm.sources = append(make([]string, len(gvm.sources) + 1), gvm.sources...)
-			gvm.sources[count] = strings.TrimSpace(src)
+			count++
+		}
+	}
+	gvm.sources = make([]Source, count)
+	count = 0
+	for _, src := range src_list {
+		if src != "" && strings.TrimSpace(src)[0] != '#' {
+			gvm.sources[count] = NewSource(strings.TrimSpace(src))
 			count++
 		}
 	}
 	return true
+}
+
+func (gvm *Gvm) SourceList() []Source {
+	return gvm.sources
 }
 
 func (gvm *Gvm) FindPackageByVersion(name string, version string) (bool, string) {
@@ -132,13 +142,13 @@ func (gvm *Gvm) FindPackage(name string) (found bool, version string, source str
 			panic("No versions")
 		}
 		for _, dir := range dirs {
-			this_version, err := versions.NewVersion(dir.Name)
+			this_version, err := NewVersion(dir.Name)
 			if err != nil {
 				gvm.logger.Info("bad version1", dir.Name, err)
 				continue
 			}
 			if found == true {
-				current_version, err := versions.NewVersion(version)
+				current_version, err := NewVersion(version)
 				if err != nil {
 					gvm.logger.Info("bad version2", version, err)
 					continue
@@ -161,21 +171,14 @@ func (gvm *Gvm) FindPackage(name string) (found bool, version string, source str
 	return found, version, source
 }
 
-func (gvm *Gvm) FindSource(name string, version string) (bool, string) {
+func (gvm *Gvm) FindSource(name string, version string) (bool, []Version, Source) {
 	for _, source := range gvm.sources {
-		src := source + "/" + name
-		if src[0] == '/' {
-			_, err := os.Open(src)
-			if err == nil {
-				return true, source
-			}
-		} else {
-			_, err := exec.Command("git", "ls-remote", src).CombinedOutput()
-			if err == nil {
-				return true, source
-			}
+		versions, err := source.Versions(name)
+		gvm.logger.Info("FindSource: ", versions)
+		if err == nil {
+			return true, versions, source
 		}
 	}
-	return false, ""
+	return false, []Version{}, nil
 }
 

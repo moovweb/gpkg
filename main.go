@@ -35,8 +35,8 @@ func main() {
 		case "list":
 			app.list()
 			break
-		case "sources":
-			app.sources()
+		case "source":
+			app.source()
 			break
 		case "version":
 			app.Info(VERSION)

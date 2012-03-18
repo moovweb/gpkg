@@ -7,11 +7,12 @@ import "exec"
 import "strings"
 import "strconv"
 
-import "github.com/moovweb/versions"
+//import "github.com/moovweb/versions"
 
 import . "logger"
 import . "gvm"
 import . "pkg"
+import . "source"
 
 type Gpkg struct {
 	*Gvm
@@ -28,23 +29,20 @@ func NewGpkg(loglevel string) *Gpkg {
 	return gpkg
 }
 
-func (gpkg *Gpkg) Close() {
-	os.RemoveAll(gpkg.tmpdir)
-}
-
 func (gpkg *Gpkg) NewPackage(name string, tag string) *Package {
-	found, source := gpkg.FindSource(name, tag)
+	found, _, source := gpkg.FindSource(name, tag)
 	if found == false {
 		return nil
 	}
-	p := NewPackage(gpkg.Gvm, name, tag, filepath.Join(gpkg.PkgsetRoot(), "pkg.gvm", name), source + "/" + name, gpkg.tmpdir, gpkg.Logger)
+	p := NewPackage(gpkg.Gvm, name, tag, filepath.Join(gpkg.PkgsetRoot(), "pkg.gvm", name), source, gpkg.tmpdir, gpkg.Logger)
 	return p
 }
 
 func (gpkg *Gpkg) NewPackageFromSource(name string, source string) *Package {
-	p := NewPackage(gpkg.Gvm, name, "", filepath.Join(gpkg.PkgsetRoot(), "pkg.gvm", name), source, gpkg.tmpdir, gpkg.Logger)
+	p := NewPackage(gpkg.Gvm, name, "", filepath.Join(gpkg.PkgsetRoot(), "pkg.gvm", name), NewSource(source), gpkg.tmpdir, gpkg.Logger)
 	return p
 }
+
 
 func (gpkg *Gpkg) FindPackageByVersion(name string, version string) *Package {
 	gpkg.Trace("name", name)
@@ -85,44 +83,13 @@ func (gvm *Gpkg) EmptyPackages() os.Error {
 	return os.RemoveAll(filepath.Join(gvm.PkgsetRoot(), "pkg.gvm"))
 }
 
-func (gvm *Gpkg) FindPackage(name string) *Package {
-	var p *Package
-	var tag string
-
-	gvm.Trace("name", name)
-	_, err := os.Open(filepath.Join(gvm.PkgsetRoot(), "pkg.gvm", name))
-	if err == nil {
-		dirs, err := ioutil.ReadDir(filepath.Join(gvm.PkgsetRoot(), "pkg.gvm", name))
-		if err != nil {
-			panic("No versions")
-		}
-		for _, dir := range dirs {
-			this_version, err := versions.NewVersion(dir.Name)
-			if err != nil {
-				gvm.Info("bad version1", dir.Name, err)
-				continue
-			}
-			if p != nil {
-				current_version, err := versions.NewVersion(tag)
-				if err != nil {
-					gvm.Info("bad version2", tag, err)
-					continue
-				}
-				matched, err := this_version.Matches("> " + current_version.String())
-				if err != nil {
-					gvm.Info("bad match", tag, err)
-					continue
-				} else if matched == true {
-					tag = dir.Name
-					p = gvm.NewPackage(name, dir.Name)
-				}
-			} else {
-				tag = dir.Name
-				p = gvm.NewPackage(name, dir.Name)
-			}
-		}
+func (gpkg *Gpkg) FindPackage(name string) *Package {
+	found, version, source := gpkg.Gvm.FindPackage(name)
+	if found != true {
+		return nil
 	}
-	return p
+
+	return NewPackage(gpkg.Gvm, name, version, filepath.Join(gpkg.PkgsetRoot(), "pkg.gvm", name), NewSource(source), filepath.Join(gpkg.PkgsetRoot(), "pkg.gvm", name), gpkg.Logger)
 }
 
 func (gvm *Gpkg) VersionList(name string) (list[] string) {
@@ -165,5 +132,9 @@ func (gvm *Gpkg) PackageList() (list[] string) {
 		return list
 	}
 	return []string{}
+}
+
+func (gpkg *Gpkg) Close() {
+	os.RemoveAll(gpkg.tmpdir)
 }
 
