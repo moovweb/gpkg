@@ -42,7 +42,7 @@ func (app *App) readArgs() bool {
 	app.command = app.readCommand()
 	app.fs = flag.NewFlagSet("gpkg", flag.ContinueOnError)
 	log_level := app.fs.String("log", "DEBUG", "Log Level")
-	if app.command == "install" {
+	if app.command == "install" || app.command == "uninstall" {
 		app.fs.StringVar(&app.version, "version", "", "Package version to install")
 	}
 	err := app.fs.Parse(app.skipCommands())

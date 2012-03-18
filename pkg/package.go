@@ -48,15 +48,6 @@ func (p *Package) String() string {
 		" tmpdir: " + p.tmpdir + "\n"
 }
 
-func (p *Package) GetVersions() []string {
-	dirs, _ := ioutil.ReadDir(p.root)
-	versions := make([]string, len(dirs))
-	for n, d := range dirs {
-		versions[n] = d.Name
-	}
-	return versions
-}
-
 func (p *Package) Get() os.Error {
 	tmp_src_dir := filepath.Join(p.tmpdir, p.name, "src")
 	os.RemoveAll(tmp_src_dir)

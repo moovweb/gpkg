@@ -10,10 +10,11 @@ import "github.com/moovweb/versions"
 import . "logger"
 
 type Gvm struct {
+	GoName string
+	PkgsetName string
+
 	root string
-	go_name string
 	go_root string
-	pkgset_name string
 	pkgset_root string
 	sources []string
 	logger *Logger
@@ -22,10 +23,10 @@ type Gvm struct {
 func NewGvm(logger *Logger) *Gvm {
 	gvm := &Gvm{logger: logger}
 	gvm.root = os.Getenv("GVM_ROOT")
-	gvm.go_name = os.Getenv("gvm_go_name")
-	gvm.go_root = filepath.Join(gvm.root, "gos", gvm.go_name)
-	gvm.pkgset_name = os.Getenv("gvm_pkgset_name")
-	gvm.pkgset_root = filepath.Join(gvm.root, "pkgsets", gvm.go_name, gvm.pkgset_name)
+	gvm.GoName = os.Getenv("gvm_go_name")
+	gvm.go_root = filepath.Join(gvm.root, "gos", gvm.GoName)
+	gvm.PkgsetName = os.Getenv("gvm_pkgset_name")
+	gvm.pkgset_root = filepath.Join(gvm.root, "pkgsets", gvm.GoName, gvm.PkgsetName)
 
 	if !gvm.ReadSources() {
 		gvm.logger.Fatal("Failed to read source list")
