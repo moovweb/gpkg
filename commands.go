@@ -66,7 +66,7 @@ func (app *App) uninstall() {
 	if app.version == "" {
 		p := app.FindPackage(pkgname)
 		if p != nil {
-			app.Debug(p)
+			app.Trace(p)
 			if app.DeletePackages(pkgname) {
 				app.Message("Deleted", pkgname)
 			} else {
@@ -78,7 +78,7 @@ func (app *App) uninstall() {
 	} else {
 		p := app.FindPackageByVersion(pkgname, app.version)
 		if p != nil {
-			app.Debug(p)
+			app.Trace(p)
 			if app.DeletePackage(pkgname, app.version) {
 				app.Message("Deleted", pkgname, "version", app.version)
 			} else {
