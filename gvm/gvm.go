@@ -42,10 +42,6 @@ func (gvm *Gvm) PkgsetRoot() string {
 	return gvm.pkgset_root
 }
 
-func (gvm *Gvm) Root() string {
-	return gvm.root
-}
-
 func (gvm *Gvm) AddSource(src string) bool {
 	for _, check_src := range gvm.sources {
 		if check_src.Root() == src {
