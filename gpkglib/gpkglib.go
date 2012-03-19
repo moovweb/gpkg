@@ -35,35 +35,9 @@ func (gpkg *Gpkg) NewPackage(name string, version *Version, source Source) *Pack
 	return p
 }
 
-func (gpkg *Gpkg) DeletePackage(name string, version *Version) bool {
-	err := os.RemoveAll(filepath.Join(gpkg.PkgsetRoot(), "pkg.gvm", name, version.String()))
-	if err == nil {
-		found, _, _ := gpkg.FindPackageInCache(name, "")
-		if found == false {
-			err := os.RemoveAll(filepath.Join(gpkg.PkgsetRoot(), "pkg.gvm", name))
-			if err == nil {
-				return true
-			} else {
-				return false
-			}
-		}
-		return true
-	}
-	return false
-}
-
-func (gpkg *Gpkg) DeletePackages(name string) bool {
-	err := os.RemoveAll(filepath.Join(gpkg.PkgsetRoot(), "pkg.gvm", name))
-	if err == nil {
-		return true
-	}
-	return false
-}
-
 func (gpkg *Gpkg) EmptyPackages() os.Error {
 	return os.RemoveAll(filepath.Join(gpkg.PkgsetRoot(), "pkg.gvm"))
 }
-
 
 func (gpkg *Gpkg) VersionList(name string) (list []*Version) {
 	out, err := exec.Command("ls", filepath.Join(gpkg.PkgsetRoot(), "pkg.gvm", name)).CombinedOutput()

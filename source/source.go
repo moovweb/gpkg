@@ -167,7 +167,19 @@ func (s CacheSource) String() string {
 }
 
 func (s CacheSource) Delete(name string, version *Version) *SourceError {
-	panic("Not implemented!")
+	err := os.RemoveAll(filepath.Join(s.root, name, version.String()))
+	if err == nil {
+		list, err := s.Versions(name)
+		if err != nil {
+			return NewSourceError("Failed to check if for other versions\n" + err.String())
+		} else if len(list) == 0 {
+			err := os.RemoveAll(filepath.Join(s.root, name))
+			if err != nil {
+				return NewSourceError("Failed to main folder after removing last package")
+			}
+		}
+	}
+	return nil
 }
 
 func (s CacheSource) Clone(name string, version *Version, dest string) *SourceError {

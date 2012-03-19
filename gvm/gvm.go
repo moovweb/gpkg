@@ -121,6 +121,28 @@ func (gvm *Gvm) SourceList() []Source {
 	return gvm.sources
 }
 
+func (gvm *Gvm) DeletePackage(name string, version *Version) bool {
+	err := gvm.cache.Delete(name, version)
+	if err != nil {
+		return false
+	}
+	return true
+}
+
+func (gvm *Gvm) DeletePackages(name string) bool {
+	versions, err := gvm.cache.Versions(name)
+	if err != nil {
+		return false
+	}
+	for _, version := range versions {
+		err := gvm.cache.Delete(name, &version)
+		if err != nil {
+			return false
+		}
+	}
+	return true
+}
+
 func (gvm *Gvm) FindPackageInCache(name string, spec string) (found bool, version *Version, source Source) {
 	versions, verr := gvm.cache.Versions(name)
 	if verr != nil {
