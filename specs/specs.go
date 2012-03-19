@@ -3,6 +3,9 @@ package specs
 import "io/ioutil"
 import "strings"
 import "strconv"
+import "fmt"
+
+import . "source"
 
 type SpecError struct {
 	msg  string
@@ -13,12 +16,12 @@ func (e *SpecError) String() string                { return "Spec Error: " + e.m
 func NewSpecError(msg string, line int) *SpecError { return &SpecError{msg: msg, line: line} }
 
 type Specs struct {
-	Source string
-	Origin string
+	Source Source
+	Origin Source
 	List   map[string]string
 }
 
-func NewBlankSpecs(source string) *Specs {
+func NewBlankSpecs(source Source) *Specs {
 	return &Specs{Source: source}
 }
 
@@ -52,14 +55,14 @@ func NewSpecs(pkgfile string) (*Specs, *SpecError) {
 			break
 		case ":source":
 			if len(fields) > 1 {
-				specs.Source = fields[1]
+				specs.Source = NewSource(fields[1])
 			} else {
 				return specs, NewSpecError("Invalid source line in "+pkgfile, n+1)
 			}
 			break
 		case ":origin":
 			if len(fields) > 1 {
-				specs.Origin = fields[1]
+				specs.Origin = NewSource(fields[1])
 			} else {
 				return specs, NewSpecError("Invalid source line in "+pkgfile, n+1)
 			}
@@ -73,11 +76,11 @@ func NewSpecs(pkgfile string) (*Specs, *SpecError) {
 }
 
 func (specs *Specs) String() (out string) {
-	if specs.Source != "" {
-		out += ":source " + specs.Source + "\n"
+	if specs.Source != nil {
+		out += fmt.Sprintln(":source", specs.Source)
 	}
-	if specs.Origin != "" {
-		out += ":origin " + specs.Origin + "\n"
+	if specs.Origin != nil {
+		out += fmt.Sprintln(":origin", specs.Origin)
 	}
 	for name, spec := range specs.List {
 		out += strings.TrimSpace("pkg "+name+" "+spec) + "\n"

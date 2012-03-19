@@ -16,7 +16,8 @@ func (e *SourceError) String() string        { return "Source Error: " + e.msg }
 
 type Source interface {
 	String() string
-	Clone(string, string, string) *SourceError
+	Clone(string, *Version, string) *SourceError
+	Delete(string, *Version) *SourceError
 	Versions(string) ([]Version, *SourceError)
 }
 
@@ -59,7 +60,11 @@ func (s GitSource) String() string {
 	return s.root
 }
 
-func (s GitSource) Clone(name string, version string, dest string) *SourceError {
+func (s GitSource) Delete(name string, version *Version) *SourceError {
+	panic("Not implemented!")
+}
+
+func (s GitSource) Clone(name string, version *Version, dest string) *SourceError {
 	cleanDest(dest, name)
 	src_repo := s.root + "/" + name
 	dest_dir := filepath.Join(dest, name)
@@ -67,12 +72,12 @@ func (s GitSource) Clone(name string, version string, dest string) *SourceError 
 	if err != nil {
 		return NewSourceError(err.String() + "\n" + string(out))
 	}
-	if version != "" {
+	if version != nil {
 		err := os.Chdir(dest_dir)
 		if err != nil {
 			return NewSourceError(fmt.Sprintln("Unable to chdir to checkout version", version, "of", name))
 		}
-		_, err = exec.Command("git", "checkout", version).CombinedOutput()
+		_, err = exec.Command("git", "checkout", version.String()).CombinedOutput()
 		if err != nil {
 			return NewSourceError(fmt.Sprintln("Invalid version:", version, "of", name, "specified"))
 		}
@@ -119,7 +124,11 @@ func (s LocalSource) String() string {
 	return s.root
 }
 
-func (s LocalSource) Clone(name string, version string, dest string) *SourceError {
+func (s LocalSource) Delete(name string, version *Version) *SourceError {
+	panic("Not implemented!")
+}
+
+func (s LocalSource) Clone(name string, version *Version, dest string) *SourceError {
 	cleanDest(dest, name)
 	err := FileCopy(filepath.Join(s.root, name), filepath.Join(dest, name))
 	// TODO: This is a hack to get jenkins working on multitarget installs folder name != project name
@@ -157,9 +166,13 @@ func (s CacheSource) String() string {
 	return s.root
 }
 
-func (s CacheSource) Clone(name string, version string, dest string) *SourceError {
+func (s CacheSource) Delete(name string, version *Version) *SourceError {
+	panic("Not implemented!")
+}
+
+func (s CacheSource) Clone(name string, version *Version, dest string) *SourceError {
 	cleanDest(dest, name)
-	err := FileCopy(filepath.Join(s.root, name, version, "src", name), dest)
+	err := FileCopy(filepath.Join(s.root, name, version.String(), "src", name), dest)
 	if err != nil {
 		return NewSourceError(err.String())
 	}

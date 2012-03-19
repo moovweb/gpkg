@@ -21,7 +21,7 @@ func (app *App) build() {
 
 	p := app.NewPackage(name, nil, NewSource(abspath))
 	app.Debug(p)
-	p.Install(p.DefaultOptions())
+	p.Install()
 	return
 }
 
@@ -37,7 +37,7 @@ func (app *App) install() {
 
 	p := app.NewPackage(name, version, source)
 	app.Debug(p)
-	p.Install(p.DefaultOptions())
+	p.Install()
 }
 
 func (app *App) source() {
