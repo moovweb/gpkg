@@ -9,10 +9,10 @@ const TMP_TEST_ROOT = "/tmp/gpkg-test"
 const TMP_TEST_DEPTH = "/tmp/gpkg-test/deep/inside/a/path"
 
 var SourceCloneTests = map[string]string{
-	"git://github.com/jbussdieker": "example1", 
+/*	"git://github.com/jbussdieker": "example1", 
 	"https://github.com/jbussdieker": "example1", 
 	"git@github.com:jbussdieker": "example1", 
-	"/home/jbussdieker/moovweb/gohattan/src": "gokogiri",
+	"/home/jbussdieker/moovweb/gohattan/src": "gokogiri",*/
 }
 
 func TestNewSource(t *testing.T) {
