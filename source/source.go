@@ -72,7 +72,7 @@ func (s GitSource) List() []string {
 
 func (s GitSource) Clone(name string, version *Version, dest string) *SourceError {
 	cleanDest(dest, name)
-	src_repo := s.root + "/" + name
+	src_repo := s.root + "/" + name + ".git"
 	dest_dir := filepath.Join(dest, name)
 	out, err := exec.Command("git", "clone", src_repo, dest_dir).CombinedOutput()
 	if err != nil {
