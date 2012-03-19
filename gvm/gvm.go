@@ -44,7 +44,7 @@ func (gvm *Gvm) PkgsetRoot() string {
 
 func (gvm *Gvm) AddSource(src string) bool {
 	for _, check_src := range gvm.sources {
-		if check_src.Root() == src {
+		if check_src.String() == src {
 			gvm.logger.Fatal("Source already exists!")
 		}
 	}
@@ -121,34 +121,34 @@ func (gvm *Gvm) SourceList() []Source {
 	return gvm.sources
 }
 
-func (gvm *Gvm) FindPackageInCache(name string, spec string) (found bool, version string, source string) {
+func (gvm *Gvm) FindPackageInCache(name string, spec string) (found bool, version *Version, source Source) {
 	versions, verr := gvm.cache.Versions(name)
 	if verr != nil {
-		return false, "", ""
+		return false, nil, nil
 	}
 	v, err := NewVersionFromMatch(versions, spec)
 	if err != nil {
-		return false, "", ""
+		return false, nil, nil
 	}
 	if v == nil {
-		return false, "", ""
+		return false, nil, nil
 	}
-	return true, v.String(), filepath.Join(gvm.pkgset_root, "pkg.gvm", name, v.String())
+	return true, v, gvm.cache
 }
 
-func (gvm *Gvm) FindPackageInSources(name string, spec string) (found bool, version string, source_str string) {
+func (gvm *Gvm) FindPackageInSources(name string, spec string) (found bool, version *Version, source Source) {
 	found, versions, source := gvm.FindPackageSource(name)
 	if found == false {
-		return false, "", ""
+		return false, nil, nil
 	}
 	v, err := NewVersionFromMatch(versions, spec)
 	if err != nil {
-		return false, "", ""
+		return false, nil, nil
 	}
 	if v == nil {
-		return false, "", ""
+		return false, nil, nil
 	}
-	return true, v.String(), source.Root()
+	return true, v, source
 }
 
 func (gvm *Gvm) FindPackageSource(name string) (bool, []Version, Source) {

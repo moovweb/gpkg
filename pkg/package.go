@@ -17,58 +17,70 @@ type Package struct {
 	gvm     *Gvm
 	root    string
 	name    string
-	tag     string
 	version *Version
 	Source
 	tmpdir string
 	logger *Logger
 	deps   map[string]*Package
+	options map[string]string
 
 	specs *Specs
 	tool  Tool
 }
 
-func NewPackage(gvm *Gvm, name string, tag string, root string, Source Source, tmpdir string, logger *Logger) *Package {
+func NewPackage(gvm *Gvm, name string, version *Version, root string, Source Source, tmpdir string, logger *Logger) *Package {
 	p := &Package{
 		root:   root,
 		gvm:    gvm,
 		logger: logger,
 		name:   name,
-		tag:    tag,
+		version:    version,
 		Source: Source,
 		tmpdir: tmpdir,
 	}
 	return p
 }
 
+func (p *Package) DefaultOptions() map[string]string {
+	return map[string]string {
+		"clean": "true",
+		"build": "true",
+		"install": "true",
+		"test": "true",
+		"strict": "true",
+	}
+}
+
 func (p *Package) String() string {
 	return "   root: " + p.root + "\n" +
 		"   name: " + p.name + "\n" +
-		"    tag: " + p.tag + "\n" +
-		" source: " + p.Source.Root() + "\n" +
+		"version: " + p.version.String() + "\n" +
+		" source: " + p.Source.String() + "\n" +
 		" tmpdir: " + p.tmpdir + "\n"
 }
 
 func (p *Package) Clone() os.Error {
-	p.logger.Info("Downloading", p.name, p.tag + "...")
+	p.logger.Info("Downloading", p.name, p.version.String() + "...")
 	tmp_src_dir := filepath.Join(p.tmpdir, p.name, "src")
-	err := p.Source.Clone(p.name, p.tag, tmp_src_dir)
+	err := p.Source.Clone(p.name, p.version.String(), tmp_src_dir)
 	if err != nil {
 		return err
 	}
 
-	if p.tag == "" {
+	if p.version == nil {
+		version_str := ""
 		v, err := ioutil.ReadFile(filepath.Join(tmp_src_dir, p.name, "VERSION"))
 		if err == nil {
-			p.tag = strings.TrimSpace(string(v))
+			version_str = strings.TrimSpace(string(v))
 		} else {
-			p.tag = "0.0"
+			version_str = "0.0"
 		}
 		if os.Getenv("BUILD_NUMBER") != "" {
-			p.tag += "." + os.Getenv("BUILD_NUMBER")
+			version_str += "." + os.Getenv("BUILD_NUMBER")
 		} else {
-			p.tag += ".src"
+			version_str += ".src"
 		}
+		p.version = NewVersion(version_str)
 	}
 
 	return nil
@@ -79,9 +91,9 @@ func (p *Package) LoadImport(dep *Package, dir string) {
 		p.logger.Fatal("Packages cannot import themselves")
 	}
 	if p.deps[dep.name] != nil {
-		if p.deps[dep.name].tag != dep.tag {
+		if p.deps[dep.name].version != dep.version {
 			p.logger.Error("Version conflict!")
-			p.logger.Fatal(dep.name, "version:", p.deps[dep.name].tag, "Imported already for", p.name)
+			p.logger.Fatal(dep.name, "version:", p.deps[dep.name].version, "Imported already for", p.name)
 		}
 	} else {
 		for _, subdep := range dep.deps {
@@ -102,7 +114,7 @@ func (p *Package) LoadImports(dir string) bool {
 	specs, err := NewSpecs(filepath.Join(tmp_src_dir, p.name, "Package.gvm"))
 	if err != nil {
 		p.logger.Debug(" * No dependencies found")
-		p.specs = NewBlankSpecs(p.Source.Root())
+		p.specs = NewBlankSpecs(p.Source.String())
 		return true
 	} else {
 		p.specs = specs
@@ -115,30 +127,30 @@ func (p *Package) LoadImports(dir string) bool {
 		var dep *Package
 		found, version, source := p.gvm.FindPackageInCache(name, spec)
 		if found == true {
-			dep = NewPackage(p.gvm, name, version, source, NewSource(source), p.tmpdir, p.logger)
+			dep = NewPackage(p.gvm, name, version, filepath.Join(p.gvm.PkgsetRoot(), "pkg.gvm", name, version.String()), source, p.tmpdir, p.logger)
 		} else {
 			found, version, source := p.gvm.FindPackageInSources(name, spec)
 			if found == true {
-				dep = NewPackage(p.gvm, name, version, filepath.Join(p.gvm.PkgsetRoot(), "pkg.gvm", name), NewSource(source), p.tmpdir, p.logger)
+				dep = NewPackage(p.gvm, name, version, filepath.Join(p.gvm.PkgsetRoot(), "pkg.gvm", name), source, p.tmpdir, p.logger)
 				p.logger.Trace(dep)
-				dep.Install()
-				dep.root = filepath.Join(p.gvm.PkgsetRoot(), "pkg.gvm", name, version)
+				dep.Install(p.options)
+				dep.root = filepath.Join(p.gvm.PkgsetRoot(), "pkg.gvm", name, version.String())
 			}
 		}
 
 		if dep == nil {
 			p.logger.Fatal("ERROR: Couldn't find " + name + " " + spec + " in any sources")
 		}
-		p.logger.Debug("    -", dep.name, dep.tag, "(Spec:", spec+")")
+		p.logger.Debug("    -", dep.name, dep.version, "(Spec:", spec+")")
 		p.LoadImport(dep, dir)
 	}
 	return true
 }
 
 func (p *Package) WriteManifest() {
-	p.specs.Origin = p.Source.Root()
+	p.specs.Origin = p.Source.String()
 	manifest := p.specs.String()
-	err := ioutil.WriteFile(filepath.Join(p.root, p.tag, "manifest"), []byte(manifest), 0664)
+	err := ioutil.WriteFile(filepath.Join(p.root, p.version.String(), "manifest"), []byte(manifest), 0664)
 	if err != nil {
 		p.logger.Fatal("Failed to write manifest file")
 	}
@@ -169,9 +181,14 @@ func (p *Package) Build() bool {
 
 	p.logger.Debug(" * Building")
 
-	os.Setenv("GOPATH", tmp_build_dir+":"+tmp_import_dir)
+	if p.options["strict"] == "true" {
+		os.Setenv("GOPATH", tmp_build_dir+":"+tmp_import_dir)
+	} else {
+		os.Setenv("GOPATH", os.Getenv("GOPATH")+":"+tmp_build_dir+":"+tmp_import_dir)
+	}
+
 	old_build_number := os.Getenv("BUILD_NUMBER")
-	os.Setenv("BUILD_NUMBER", p.tag)
+	os.Setenv("BUILD_NUMBER", p.version.String())
 
 	out, berr := p.tool.Clean()
 	if berr != nil {
@@ -197,22 +214,28 @@ func (p *Package) Build() bool {
 	} else {
 		p.logger.Debug(p.PrettyLog(out))
 	}
-	// Run tests using gpkg Makefile
-	p.logger.Debug(" * Testing")
-	out, berr = p.tool.Test()
-	if berr != nil {
-		p.logger.Error(berr)
-		p.logger.Error(p.PrettyLog(out))
-		return false
-	} else {
-		p.logger.Debug(p.PrettyLog(out))
+
+	// TESTS
+	//////////////////////
+	if p.options["test"] == "true" {
+		// Run tests using gpkg Makefile
+		p.logger.Debug(" * Testing")
+		out, berr = p.tool.Test()
+		if berr != nil {
+			p.logger.Error(berr)
+			p.logger.Error(p.PrettyLog(out))
+			return false
+		} else {
+			p.logger.Debug(p.PrettyLog(out))
+		}
 	}
 
 	os.Setenv("BUILD_NUMBER", old_build_number)
 	return true
 }
 
-func (p *Package) Install() {
+func (p *Package) Install(options map[string]string) {
+	p.options = options
 	tmp_build_dir := filepath.Join(p.tmpdir, p.name, "build")
 	tmp_src_dir := filepath.Join(p.tmpdir, p.name, "src")
 
@@ -222,36 +245,35 @@ func (p *Package) Install() {
 	}
 	p.tool = NewTool(filepath.Join(tmp_src_dir, p.name))
 	if !p.Build() {
-		// TODO: p.gvm.DeletePackage(p)
 		p.logger.Fatal("ERROR Building package")
 	}
 
-	p.logger.Debug(" * Installing", p.name+"-"+p.tag+"...")
+	// INSTALL
+	//////////////////////
+	if options["install"] == "true" {
+		p.logger.Debug(" * Installing", p.name+"-"+p.version.String()+"...")
+		err = os.RemoveAll(filepath.Join(p.root, p.version.String()))
+		if err != nil {
+			p.logger.Fatal("Failed to remove old version")
+		}
+		os.MkdirAll(filepath.Join(p.root, p.version.String()), 0775)
+		p.WriteManifest()
+		err = FileCopy(tmp_src_dir, filepath.Join(p.root, p.version.String(), "src"))
+		if err != nil {
+			p.logger.Fatal("Failed to copy source to install folder", err)
+		}
 
-	err = os.RemoveAll(filepath.Join(p.root, p.tag))
-	if err != nil {
-		p.logger.Fatal("Failed to remove old version")
+		err = FileCopy(filepath.Join(tmp_build_dir, "pkg"), filepath.Join(p.root, p.version.String(), "pkg"))
+		if err != nil {
+			p.logger.Fatal("Failed to copy libraries to install folder")
+		}
+
+		err = FileCopy(filepath.Join(tmp_build_dir, "bin"), filepath.Join(p.root, p.version.String(), "bin"))
+		err = FileCopy(filepath.Join(tmp_build_dir, "bin"), filepath.Join(p.gvm.PkgsetRoot()))
+		if err == nil {
+			p.logger.Debug(" * Installed binaries")
+		}
+
+		p.logger.Info("Installed", p.name, p.version.String())
 	}
-
-	os.MkdirAll(filepath.Join(p.root, p.tag), 0775)
-
-	p.WriteManifest()
-
-	err = FileCopy(tmp_src_dir, filepath.Join(p.root, p.tag, "src"))
-	if err != nil {
-		p.logger.Fatal("Failed to copy source to install folder", err)
-	}
-
-	err = FileCopy(filepath.Join(tmp_build_dir, "pkg"), filepath.Join(p.root, p.tag, "pkg"))
-	if err != nil {
-		p.logger.Fatal("Failed to copy libraries to install folder")
-	}
-
-	err = FileCopy(filepath.Join(tmp_build_dir, "bin"), filepath.Join(p.root, p.tag, "bin"))
-	// TODO: err = FileCopy(filepath.Join(tmp_build_dir, "bin"), filepath.Join(p.gvm.pkgset_root))
-	if err == nil {
-		p.logger.Debug(" * Installed binaries")
-	}
-
-	p.logger.Info("Installed", p.name, p.tag)
 }

@@ -15,7 +15,7 @@ func NewSourceError(msg string) *SourceError { return &SourceError{msg: msg} }
 func (e *SourceError) String() string        { return "Source Error: " + e.msg }
 
 type Source interface {
-	Root() string
+	String() string
 	Clone(string, string, string) *SourceError
 	Versions(string) ([]Version, *SourceError)
 }
@@ -55,7 +55,7 @@ func NewGitSource(root string) Source {
 	return Source(s)
 }
 
-func (s GitSource) Root() string {
+func (s GitSource) String() string {
 	return s.root
 }
 
@@ -115,7 +115,7 @@ func NewLocalSource(root string) Source {
 	return Source(s)
 }
 
-func (s LocalSource) Root() string {
+func (s LocalSource) String() string {
 	return s.root
 }
 
@@ -153,7 +153,7 @@ func NewCacheSource(root string) Source {
 	return Source(s)
 }
 
-func (s CacheSource) Root() string {
+func (s CacheSource) String() string {
 	return s.root
 }
 

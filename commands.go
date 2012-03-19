@@ -5,6 +5,8 @@ import "path/filepath"
 //import "io/ioutil"
 //import "strings"
 
+import . "source"
+
 func (app *App) build() {
 	wd, _ := os.Getwd()
 	name := filepath.Base(wd)
@@ -17,10 +19,9 @@ func (app *App) build() {
 		app.Fatal("Failed to get parent folder")
 	}
 
-	p := app.NewPackage(name, "", abspath)
+	p := app.NewPackage(name, nil, NewSource(abspath))
 	app.Debug(p)
-	//p.force_install = true
-	p.Install()
+	p.Install(p.DefaultOptions())
 	return
 }
 
@@ -36,7 +37,7 @@ func (app *App) install() {
 
 	p := app.NewPackage(name, version, source)
 	app.Debug(p)
-	p.Install()
+	p.Install(p.DefaultOptions())
 }
 
 func (app *App) source() {
@@ -53,7 +54,7 @@ func (app *App) source() {
 		app.Message("Removed", source, "from sources")
 	} else if command == "list" || command == "" {
 		for _, src := range app.SourceList() {
-			app.Info(src.Root())
+			app.Info(src)
 		}
 	} else {
 		app.Fatal("Invalid source command (" + command + ").\nValid choices are: add, remove, and list")
@@ -95,7 +96,7 @@ func (app *App) list() {
 		output := pkg + " ("
 		versions := app.VersionList(pkg)
 		for n, version := range versions {
-			output += version
+			output += version.String()
 			if n < len(versions)-1 {
 				output += ", "
 			}
