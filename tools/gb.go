@@ -2,6 +2,7 @@ package tool
 
 import "os"
 import "exec"
+import . "errors"
 
 type GbTool struct {
 	sandbox string
@@ -11,7 +12,7 @@ func NewGbTool(sandbox string) Tool {
 	return Tool(GbTool{sandbox: sandbox})
 }
 
-func (gb GbTool) runCommand(cmd string) (string, *ToolError) {
+func (gb GbTool) runCommand(cmd string) (string, Error) {
 	pushd, err := os.Getwd()
 	if err != nil {
 		return "", NewToolError("Failed to get working directory")
@@ -31,18 +32,18 @@ func (gb GbTool) runCommand(cmd string) (string, *ToolError) {
 	return string(out), nil
 }
 
-func (gb GbTool) Clean() (string, *ToolError) {
+func (gb GbTool) Clean() (string, Error) {
 	return gb.runCommand("-c")
 }
 
-func (gb GbTool) Build() (string, *ToolError) {
+func (gb GbTool) Build() (string, Error) {
 	return gb.runCommand("-b")
 }
 
-func (gb GbTool) Test() (string, *ToolError) {
+func (gb GbTool) Test() (string, Error) {
 	return gb.runCommand("-t")
 }
 
-func (gb GbTool) Install() (string, *ToolError) {
+func (gb GbTool) Install() (string, Error) {
 	return gb.runCommand("-i")
 }

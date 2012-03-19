@@ -7,7 +7,7 @@ const TEST_TOOL_PROJECT_MAKE = "testdata/make_project"
 const TEST_TOOL_PROJECT_GOINSTALL = "testdata/goinstall_project"
 const TEST_TOOL_PROJECT_GOINSTALL_TARGET = "testdata/goinstall_project"
 
-func testTool(tool Tool) (string, *ToolError) {
+func testTool(tool Tool) (string, Error) {
 	out, err := tool.Clean()
 	if err != nil {
 		return out, err

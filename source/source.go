@@ -8,6 +8,7 @@ import "fmt"
 
 import . "version"
 import . "util"
+import . "errors"
 
 type SourceError struct{ msg string }
 
@@ -16,9 +17,9 @@ func (e *SourceError) String() string        { return "Source Error: " + e.msg }
 
 type Source interface {
 	String() string
-	Clone(string, *Version, string) *SourceError
-	Delete(string, *Version) *SourceError
-	Versions(string) ([]Version, *SourceError)
+	Clone(string, *Version, string) Error
+	Delete(string, *Version) Error
+	Versions(string) ([]Version, Error)
 	List() []string
 }
 
@@ -31,7 +32,7 @@ func NewSource(root string) Source {
 ///////////////////////////////////////////
 // Common
 ///////////////////////////////////////////
-func cleanDest(dest string, name string) *SourceError {
+func cleanDest(dest string, name string) Error {
 	err := os.MkdirAll(dest, 0755)
 	if err != nil {
 		return NewSourceError(err.String())
@@ -61,7 +62,7 @@ func (s GitSource) String() string {
 	return s.root
 }
 
-func (s GitSource) Delete(name string, version *Version) *SourceError {
+func (s GitSource) Delete(name string, version *Version) Error {
 	panic("Not implemented!")
 }
 
@@ -70,7 +71,7 @@ func (s GitSource) List() []string {
 	return []string{}
 }
 
-func (s GitSource) Clone(name string, version *Version, dest string) *SourceError {
+func (s GitSource) Clone(name string, version *Version, dest string) Error {
 	cleanDest(dest, name)
 	src_repo := s.root + "/" + name + ".git"
 	dest_dir := filepath.Join(dest, name)
@@ -91,7 +92,7 @@ func (s GitSource) Clone(name string, version *Version, dest string) *SourceErro
 	return nil
 }
 
-func (s GitSource) Versions(name string) (list []Version, err *SourceError) {
+func (s GitSource) Versions(name string) (list []Version, err Error) {
 	out, oserr := exec.Command("git", "ls-remote", s.root+"/"+name).CombinedOutput()
 	if oserr != nil {
 		return nil, NewSourceError(oserr.String())
@@ -130,7 +131,7 @@ func (s LocalSource) String() string {
 	return s.root
 }
 
-func (s LocalSource) Delete(name string, version *Version) *SourceError {
+func (s LocalSource) Delete(name string, version *Version) Error {
 	panic("Not implemented!")
 }
 
@@ -138,7 +139,7 @@ func (s LocalSource) List() []string {
 	panic("Not implemented!")
 }
 
-func (s LocalSource) Clone(name string, version *Version, dest string) *SourceError {
+func (s LocalSource) Clone(name string, version *Version, dest string) Error {
 	cleanDest(dest, name)
 	err := FileCopy(filepath.Join(s.root, name), filepath.Join(dest, name))
 	// TODO: This is a hack to get jenkins working on multitarget installs folder name != project name
@@ -155,7 +156,7 @@ func (s LocalSource) Clone(name string, version *Version, dest string) *SourceEr
 	return nil
 }
 
-func (s LocalSource) Versions(name string) (list []Version, err *SourceError) {
+func (s LocalSource) Versions(name string) (list []Version, err Error) {
 	// TODO: This assumes theres a test for NewVersion("0.0.0")!
 	return []Version{*NewVersion("0.0.0")}, nil
 }
@@ -176,7 +177,7 @@ func (s CacheSource) String() string {
 	return s.root
 }
 
-func (s CacheSource) Delete(name string, version *Version) *SourceError {
+func (s CacheSource) Delete(name string, version *Version) Error {
 	err := os.RemoveAll(filepath.Join(s.root, name, version.String()))
 	if err == nil {
 		list, err := s.Versions(name)
@@ -206,7 +207,7 @@ func (s CacheSource) List() (list []string) {
 	return []string{}
 }
 
-func (s CacheSource) Clone(name string, version *Version, dest string) *SourceError {
+func (s CacheSource) Clone(name string, version *Version, dest string) Error {
 	cleanDest(dest, name)
 	err := FileCopy(filepath.Join(s.root, name, version.String(), "src", name), dest)
 	if err != nil {
@@ -216,7 +217,7 @@ func (s CacheSource) Clone(name string, version *Version, dest string) *SourceEr
 	return nil
 }
 
-func (s CacheSource) Versions(name string) (list []Version, err *SourceError) {
+func (s CacheSource) Versions(name string) (list []Version, err Error) {
 	out, oserr := exec.Command("ls", filepath.Join(s.root, name)).CombinedOutput()
 	if err == nil {
 		versions := strings.Split(string(out), "\n")
