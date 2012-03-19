@@ -14,28 +14,34 @@ import . "specs"
 import . "tools"
 import . "util"
 
+type BuildOpts struct {
+	Test    bool
+	Install bool
+}
+
 type Package struct {
 	Source
+	BuildOpts
 	gvm     *Gvm
 	root    string
 	name    string
 	version *Version
-	tmpdir string
-	logger *Logger
-	deps   map[string]*Package
-	specs *Specs
-	tool  Tool
+	tmpdir  string
+	logger  *Logger
+	deps    map[string]*Package
+	specs   *Specs
+	tool    Tool
 }
 
 func NewPackage(gvm *Gvm, name string, version *Version, root string, Source Source, tmpdir string, logger *Logger) *Package {
 	p := &Package{
-		root:   root,
-		gvm:    gvm,
-		logger: logger,
-		name:   name,
-		version:    version,
-		Source: Source,
-		tmpdir: tmpdir,
+		root:    root,
+		gvm:     gvm,
+		logger:  logger,
+		name:    name,
+		version: version,
+		Source:  Source,
+		tmpdir:  tmpdir,
 	}
 	return p
 }
@@ -122,7 +128,7 @@ func (p *Package) LoadImports(dir string) bool {
 			if found == true {
 				dep = NewPackage(p.gvm, name, version, filepath.Join(p.gvm.PkgsetRoot(), "pkg.gvm", name), source, p.tmpdir, p.logger)
 				p.logger.Trace(dep)
-				dep.Install()
+				dep.Install(p.BuildOpts)
 				dep.root = filepath.Join(p.gvm.PkgsetRoot(), "pkg.gvm", name, version.String())
 			}
 		}
@@ -200,22 +206,25 @@ func (p *Package) Build() bool {
 	} else {
 		p.logger.Debug(p.PrettyLog(out))
 	}
-	// Test
-	p.logger.Debug(" * Testing")
-	out, berr = p.tool.Test()
-	if berr != nil {
-		p.logger.Error(berr)
-		p.logger.Error(p.PrettyLog(out))
-		return false
-	} else {
-		p.logger.Debug(p.PrettyLog(out))
+	if p.BuildOpts.Test == true {
+		// Test
+		p.logger.Debug(" * Testing")
+		out, berr = p.tool.Test()
+		if berr != nil {
+			p.logger.Error(berr)
+			p.logger.Error(p.PrettyLog(out))
+			return false
+		} else {
+			p.logger.Debug(p.PrettyLog(out))
+		}
 	}
-
 	os.Setenv("BUILD_NUMBER", old_build_number)
 	return true
 }
 
-func (p *Package) Install() {
+func (p *Package) Install(b BuildOpts) {
+	p.BuildOpts = b
+
 	tmp_build_dir := filepath.Join(p.tmpdir, p.name, "build")
 	tmp_src_dir := filepath.Join(p.tmpdir, p.name, "src")
 
@@ -230,28 +239,30 @@ func (p *Package) Install() {
 
 	// INSTALL
 	//////////////////////
-	p.logger.Debug(" * Installing", p.name+"-"+p.version.String()+"...")
-	err = os.RemoveAll(filepath.Join(p.root, p.version.String()))
-	if err != nil {
-		p.logger.Fatal("Failed to remove old version")
-	}
-	os.MkdirAll(filepath.Join(p.root, p.version.String()), 0775)
-	p.WriteManifest()
-	err = FileCopy(tmp_src_dir, filepath.Join(p.root, p.version.String(), "src"))
-	if err != nil {
-		p.logger.Fatal("Failed to copy source to install folder", err)
-	}
+	if p.BuildOpts.Install == true {
+		p.logger.Debug(" * Installing", p.name+"-"+p.version.String()+"...")
+		err = os.RemoveAll(filepath.Join(p.root, p.version.String()))
+		if err != nil {
+			p.logger.Fatal("Failed to remove old version")
+		}
+		os.MkdirAll(filepath.Join(p.root, p.version.String()), 0775)
+		p.WriteManifest()
+		err = FileCopy(tmp_src_dir, filepath.Join(p.root, p.version.String(), "src"))
+		if err != nil {
+			p.logger.Fatal("Failed to copy source to install folder", err)
+		}
 
-	err = FileCopy(filepath.Join(tmp_build_dir, "pkg"), filepath.Join(p.root, p.version.String(), "pkg"))
-	if err != nil {
-		p.logger.Fatal("Failed to copy libraries to install folder")
-	}
+		err = FileCopy(filepath.Join(tmp_build_dir, "pkg"), filepath.Join(p.root, p.version.String(), "pkg"))
+		if err != nil {
+			p.logger.Fatal("Failed to copy libraries to install folder")
+		}
 
-	err = FileCopy(filepath.Join(tmp_build_dir, "bin"), filepath.Join(p.root, p.version.String(), "bin"))
-	err = FileCopy(filepath.Join(tmp_build_dir, "bin"), filepath.Join(p.gvm.PkgsetRoot()))
-	if err == nil {
-		p.logger.Debug(" * Installed binaries")
-	}
+		err = FileCopy(filepath.Join(tmp_build_dir, "bin"), filepath.Join(p.root, p.version.String(), "bin"))
+		err = FileCopy(filepath.Join(tmp_build_dir, "bin"), filepath.Join(p.gvm.PkgsetRoot()))
+		if err == nil {
+			p.logger.Debug(" * Installed binaries")
+		}
 
-	p.logger.Info("Installed", p.name, p.version.String())
+		p.logger.Info("Installed", p.name, p.version.String())
+	}
 }

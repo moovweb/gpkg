@@ -32,6 +32,12 @@ func main() {
 	case "build":
 		app.build()
 		break
+	case "test":
+		app.test()
+		break
+	case "doc":
+		app.doc()
+		break
 	case "list":
 		app.list()
 		break

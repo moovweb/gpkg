@@ -6,8 +6,10 @@ import "path/filepath"
 //import "strings"
 
 import . "source"
+import . "version"
+import . "pkg"
 
-func (app *App) build() {
+func (app *App) buildLocalPackage() *Package {
 	wd, _ := os.Getwd()
 	name := filepath.Base(wd)
 	if app.pkgname != "" {
@@ -19,9 +21,22 @@ func (app *App) build() {
 		app.Fatal("Failed to get parent folder")
 	}
 
-	p := app.NewPackage(name, nil, NewSource(abspath))
+	return app.NewPackage(name, nil, NewSource(abspath))
+}
+
+func (app *App) build() {
+	p := app.buildLocalPackage()
 	app.Debug(p)
-	p.Install()
+	p.Install(app.opts)
+	return
+}
+
+func (app *App) test() {
+	p := app.buildLocalPackage()
+	app.Debug(p)
+	app.opts.Test = true
+	app.opts.Install = false
+	p.Install(app.opts)
 	return
 }
 
@@ -37,7 +52,7 @@ func (app *App) install() {
 
 	p := app.NewPackage(name, version, source)
 	app.Debug(p)
-	p.Install()
+	p.Install(app.opts)
 }
 
 func (app *App) source() {
@@ -61,19 +76,30 @@ func (app *App) source() {
 	}
 }
 
-func (app *App) uninstall() {
-	pkgname := app.readCommand()
-	if pkgname == "" {
+func (app *App) packageWithLogging(name string) (string, *Version) {
+	if name == "" {
 		app.Fatal("Please specify package name")
 	}
-	found, version, _ := app.FindPackageInCache(pkgname, "")
+	found, version, _ := app.FindPackageInCache(name, "")
 	if found == false {
 		app.Fatal("Invalid package name")
 	}
-	found, version, _ = app.FindPackageInCache(pkgname, app.version)
+	found, version, _ = app.FindPackageInCache(name, app.version)
 	if found == false {
 		app.Fatal("Invalid package version")
 	}
+	return name, version
+}
+
+func (app *App) doc() {
+	name := app.readCommand()
+	pkgname, version := app.packageWithLogging(name)
+	app.StartDocServer(pkgname, version)
+}
+
+func (app *App) uninstall() {
+	name := app.readCommand()
+	pkgname, version := app.packageWithLogging(name)
 	if app.version == "" {
 		if app.DeletePackages(pkgname) {
 			app.Message("Deleted", pkgname)
@@ -90,7 +116,7 @@ func (app *App) uninstall() {
 }
 
 func (app *App) list() {
-	app.Message("\ngpkg package list", app.Gvm.GoName+"@"+app.Gvm.PkgsetName, "\n")
+	app.Message("\ngpkg package list", app.Gvm.String(), "\n")
 	pkgs := app.PackageList()
 	for _, pkg := range pkgs {
 		output := pkg + " ("
@@ -104,7 +130,7 @@ func (app *App) list() {
 		output += ")"
 		app.Info(output)
 	}
-	app.Message("\ngoinstall package list", app.Gvm.GoName+"@"+app.Gvm.PkgsetName, "\n")
+	app.Message("\ngoinstall package list", app.Gvm.String(), "\n")
 	pkgs = app.GoinstallList()
 	for _, pkg := range pkgs {
 		app.Info(pkg)

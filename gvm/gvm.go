@@ -11,8 +11,8 @@ import . "logger"
 import . "source"
 
 type Gvm struct {
-	GoName     string
-	PkgsetName string
+	go_name     string
+	pkgset_name string
 
 	root        string
 	go_root     string
@@ -25,17 +25,21 @@ type Gvm struct {
 func NewGvm(logger *Logger) *Gvm {
 	gvm := &Gvm{logger: logger}
 	gvm.root = os.Getenv("GVM_ROOT")
-	gvm.GoName = os.Getenv("gvm_go_name")
-	gvm.go_root = filepath.Join(gvm.root, "gos", gvm.GoName)
-	gvm.PkgsetName = os.Getenv("gvm_pkgset_name")
-	gvm.pkgset_root = filepath.Join(gvm.root, "pkgsets", gvm.GoName, gvm.PkgsetName)
+	gvm.go_name = os.Getenv("gvm_go_name")
+	gvm.go_root = filepath.Join(gvm.root, "gos", gvm.go_name)
+	gvm.pkgset_name = os.Getenv("gvm_pkgset_name")
+	gvm.pkgset_root = filepath.Join(gvm.root, "pkgsets", gvm.go_name, gvm.pkgset_name)
 
 	if !gvm.ReadSources() {
 		gvm.logger.Fatal("Failed to read source list")
 	}
-	gvm.cache = NewCacheSource(filepath.Join(gvm.root, "pkgsets", gvm.GoName, gvm.PkgsetName, "pkg.gvm"))
+	gvm.cache = NewCacheSource(filepath.Join(gvm.root, "pkgsets", gvm.go_name, gvm.pkgset_name, "pkg.gvm"))
 
 	return gvm
+}
+
+func (gvm *Gvm) String() string {
+	return gvm.go_name + "@" + gvm.pkgset_name
 }
 
 func (gvm *Gvm) PkgsetRoot() string {
@@ -143,6 +147,18 @@ func (gvm *Gvm) DeletePackages(name string) bool {
 	return true
 }
 
+func (gvm *Gvm) PackageList() (list []string) {
+	return gvm.cache.List()
+}
+
+func (gvm *Gvm) VersionList(name string) (list []Version) {
+	versions, err := gvm.cache.Versions(name)
+	if err != nil {
+		return nil
+	}
+	return versions
+}
+
 func (gvm *Gvm) FindPackageInCache(name string, spec string) (found bool, version *Version, source Source) {
 	versions, verr := gvm.cache.Versions(name)
 	if verr != nil {
@@ -181,5 +197,5 @@ func (gvm *Gvm) FindPackageSource(name string) (bool, []Version, Source) {
 			return true, versions, source
 		}
 	}
-	return false, []Version{}, nil
+	return false, nil, nil
 }

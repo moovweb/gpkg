@@ -19,6 +19,7 @@ type Source interface {
 	Clone(string, *Version, string) *SourceError
 	Delete(string, *Version) *SourceError
 	Versions(string) ([]Version, *SourceError)
+	List() []string
 }
 
 func NewSource(root string) Source {
@@ -62,6 +63,11 @@ func (s GitSource) String() string {
 
 func (s GitSource) Delete(name string, version *Version) *SourceError {
 	panic("Not implemented!")
+}
+
+func (s GitSource) List() []string {
+	panic("Not implemented!")
+	return []string{}
 }
 
 func (s GitSource) Clone(name string, version *Version, dest string) *SourceError {
@@ -128,6 +134,10 @@ func (s LocalSource) Delete(name string, version *Version) *SourceError {
 	panic("Not implemented!")
 }
 
+func (s LocalSource) List() []string {
+	panic("Not implemented!")
+}
+
 func (s LocalSource) Clone(name string, version *Version, dest string) *SourceError {
 	cleanDest(dest, name)
 	err := FileCopy(filepath.Join(s.root, name), filepath.Join(dest, name))
@@ -180,6 +190,20 @@ func (s CacheSource) Delete(name string, version *Version) *SourceError {
 		}
 	}
 	return nil
+}
+
+func (s CacheSource) List() (list []string) {
+	out, err := exec.Command("ls", s.root).CombinedOutput()
+	if err == nil {
+		pkgs := strings.Split(string(out), "\n")
+		pkgs = pkgs[0 : len(pkgs)-1]
+		list = make([]string, len(pkgs))
+		for n, pkg := range pkgs {
+			list[n] = pkg
+		}
+		return list
+	}
+	return []string{}
 }
 
 func (s CacheSource) Clone(name string, version *Version, dest string) *SourceError {
