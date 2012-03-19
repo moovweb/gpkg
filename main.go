@@ -6,6 +6,7 @@ import "os"
 
 func main() {
 	app := NewApp(os.Args)
+	defer app.Close()
 	if app == nil {
 		os.Exit(1)
 	}

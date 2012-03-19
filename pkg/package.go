@@ -102,11 +102,11 @@ func (p *Package) LoadImport(dep *Package, dir string) {
 	os.MkdirAll(dir, 0775)
 	err := FileCopy(filepath.Join(dep.root, "pkg"), dir)
 	if err != nil {
-		p.logger.Fatal("ERROR: Couldn't load import: " + dep.name + "\n" + err.String())
+		p.logger.Fatal("ERROR: Couldn't load import lib: " + dep.name + "\n" + err.String())
 	}
-	err = FileCopy(filepath.Join(dep.root, "src"), filepath.Join(dir, ".."))
+	err = FileCopy(filepath.Join(dep.root, "src", dep.name), filepath.Join(dir, "..", "src"))
 	if err != nil {
-		p.logger.Fatal("ERROR: Couldn't load import: " + dep.name + "\n" + err.String())
+		p.logger.Fatal("ERROR: Couldn't load import src: " + dep.name + "\n" + err.String())
 	}
 }
 
@@ -129,7 +129,7 @@ func (p *Package) LoadImports(dir string) bool {
 		found, version, source := p.gvm.FindPackageInCache(name, spec)
 		if found == true {
 			dep = NewPackage(p.gvm, name, version, filepath.Join(p.gvm.PkgsetRoot(), "pkg.gvm", name, version.String()), source, p.tmpdir, p.logger)
-		} else {
+		} else if p.BuildOpts.Install == true {
 			found, version, source := p.gvm.FindPackageInSources(name, spec)
 			if found == true {
 				dep = NewPackage(p.gvm, name, version, filepath.Join(p.gvm.PkgsetRoot(), "pkg.gvm", name), source, p.tmpdir, p.logger)
@@ -137,6 +137,8 @@ func (p *Package) LoadImports(dir string) bool {
 				dep.Install(p.BuildOpts)
 				dep.root = filepath.Join(p.gvm.PkgsetRoot(), "pkg.gvm", name, version.String())
 			}
+		} else {
+			p.logger.Fatal("ERROR: Package", name , spec, "not found locally and install=false")
 		}
 
 		if dep == nil {
@@ -180,7 +182,7 @@ func (p *Package) Build() bool {
 		return false
 	}
 
-	if p.BuildOpts.Install == true {
+	if p.BuildOpts.Build == true {
 		p.logger.Debug(" * Building")
 
 		os.Setenv("GOPATH", tmp_build_dir+":"+tmp_import_dir)
@@ -262,7 +264,7 @@ func (p *Package) Install(b BuildOpts) {
 
 		err = FileCopy(filepath.Join(tmp_build_dir, "pkg"), filepath.Join(p.root, p.version.String(), "pkg"))
 		if err != nil {
-			p.logger.Fatal("Failed to copy libraries to install folder")
+			p.logger.Fatal("Failed to copy libraries to install folder\n", err.String())
 		}
 
 		err = FileCopy(filepath.Join(tmp_build_dir, "bin"), filepath.Join(p.root, p.version.String(), "bin"))

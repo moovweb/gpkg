@@ -4,7 +4,7 @@ import "flag"
 import . "gpkglib"
 import . "pkg"
 
-const VERSION = "0.1.15"
+const VERSION = "0.1.16"
 
 type App struct {
 	*Gpkg
@@ -43,31 +43,32 @@ func (app *App) skipCommands() []string {
 	return app.args
 }
 
+func (app *App) addBuildFlags(local bool, build bool, test bool, install bool) {
+	if local == false {
+		app.fs.StringVar(&app.version, "version", "", "Package version to install")
+	} else {
+		app.fs.StringVar(&app.pkgname, "pkgname", "", "Name to give package being built. Default is the folder name.")
+	}
+	app.fs.BoolVar(&app.opts.Build, "build", build, "Build the package")
+	app.fs.BoolVar(&app.opts.Test, "test", test, "Run package tests")
+	app.fs.BoolVar(&app.opts.Install, "install", install, "Install the package")
+}
+
 func (app *App) readArgs() bool {
 	app.command = app.readCommand()
 	app.fs = flag.NewFlagSet("gpkg [command]", flag.ContinueOnError)
 	log_level := app.fs.String("log", "info", "Log Level")
 	if app.command == "install" || app.command == "uninstall" {
-		app.fs.StringVar(&app.version, "version", "", "Package version to install")
-		app.fs.BoolVar(&app.opts.Test, "test", true, "Run package tests")
-		app.fs.BoolVar(&app.opts.Install, "install", true, "Install the package")
+		app.addBuildFlags(false, true, true, true)
 	}
 	if app.command == "build" {
-		app.fs.StringVar(&app.pkgname, "pkgname", "", "Name to give package being built. Default is the folder name.")
-		app.fs.BoolVar(&app.opts.Test, "test", true, "Run package tests")
-		app.fs.BoolVar(&app.opts.Install, "install", true, "Install the package")
+		app.addBuildFlags(true, true, true, true)
 	}
 	if app.command == "test" {
-		app.fs.StringVar(&app.pkgname, "pkgname", "", "Name to give package being built. Default is the folder name.")
-		app.fs.BoolVar(&app.opts.Build, "build", true, "Build the package")
-		app.fs.BoolVar(&app.opts.Test, "test", true, "Run package tests")
-		app.fs.BoolVar(&app.opts.Install, "install", false, "Install the package")
+		app.addBuildFlags(true, true, true, false)
 	}
 	if app.command == "doc" {
-		app.fs.StringVar(&app.version, "version", "", "Package version to install")
-		app.fs.BoolVar(&app.opts.Build, "build", false, "Build the package")
-		app.fs.BoolVar(&app.opts.Test, "test", false, "Run package tests")
-		app.fs.BoolVar(&app.opts.Install, "install", false, "Install the package")
+		app.addBuildFlags(false, false, false, false)
 	}
 	err := app.fs.Parse(app.skipCommands())
 	app.Gpkg = NewGpkg(*log_level)
@@ -92,3 +93,8 @@ func (app *App) printUsage() {
 	app.Info("  source    - List/Add/Remove sources for packages")
 	app.Info("  version   - Print the gpkg version")
 }
+
+func (app *App) Close() {
+	app.Gpkg.Close()
+}
+
