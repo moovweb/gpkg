@@ -15,8 +15,10 @@ import . "tools"
 import . "util"
 
 type BuildOpts struct {
-	Test    bool
-	Install bool
+	Build       bool
+	Test        bool
+	Install     bool
+	InstallDeps bool
 }
 
 type Package struct {
@@ -102,6 +104,10 @@ func (p *Package) LoadImport(dep *Package, dir string) {
 	if err != nil {
 		p.logger.Fatal("ERROR: Couldn't load import: " + dep.name + "\n" + err.String())
 	}
+	err = FileCopy(filepath.Join(dep.root, "src"), filepath.Join(dir, ".."))
+	if err != nil {
+		p.logger.Fatal("ERROR: Couldn't load import: " + dep.name + "\n" + err.String())
+	}
 }
 
 func (p *Package) LoadImports(dir string) bool {
@@ -174,42 +180,23 @@ func (p *Package) Build() bool {
 		return false
 	}
 
-	p.logger.Debug(" * Building")
+	if p.BuildOpts.Install == true {
+		p.logger.Debug(" * Building")
 
-	os.Setenv("GOPATH", tmp_build_dir+":"+tmp_import_dir)
+		os.Setenv("GOPATH", tmp_build_dir+":"+tmp_import_dir)
 
-	old_build_number := os.Getenv("BUILD_NUMBER")
-	os.Setenv("BUILD_NUMBER", p.version.String())
+		old_build_number := os.Getenv("BUILD_NUMBER")
+		os.Setenv("BUILD_NUMBER", p.version.String())
 
-	// Clean
-	out, berr := p.tool.Clean()
-	if berr != nil {
-		p.logger.Error("Failed to clean")
-		p.logger.Error(p.PrettyLog(out))
-		return false
-	}
-	// Build
-	out, berr = p.tool.Build()
-	if berr != nil {
-		p.logger.Error(berr)
-		p.logger.Error(p.PrettyLog(out))
-		return false
-	} else {
-		p.logger.Debug(p.PrettyLog(out))
-	}
-	// Install
-	out, berr = p.tool.Install()
-	if berr != nil {
-		p.logger.Error(berr)
-		p.logger.Error(p.PrettyLog(out))
-		return false
-	} else {
-		p.logger.Debug(p.PrettyLog(out))
-	}
-	if p.BuildOpts.Test == true {
-		// Test
-		p.logger.Debug(" * Testing")
-		out, berr = p.tool.Test()
+		// Clean
+		out, berr := p.tool.Clean()
+		if berr != nil {
+			p.logger.Error("Failed to clean")
+			p.logger.Error(p.PrettyLog(out))
+			return false
+		}
+		// Build
+		out, berr = p.tool.Build()
 		if berr != nil {
 			p.logger.Error(berr)
 			p.logger.Error(p.PrettyLog(out))
@@ -217,8 +204,29 @@ func (p *Package) Build() bool {
 		} else {
 			p.logger.Debug(p.PrettyLog(out))
 		}
+		// Install
+		out, berr = p.tool.Install()
+		if berr != nil {
+			p.logger.Error(berr)
+			p.logger.Error(p.PrettyLog(out))
+			return false
+		} else {
+			p.logger.Debug(p.PrettyLog(out))
+		}
+		if p.BuildOpts.Test == true {
+			// Test
+			p.logger.Debug(" * Testing")
+			out, berr = p.tool.Test()
+			if berr != nil {
+				p.logger.Error(berr)
+				p.logger.Error(p.PrettyLog(out))
+				return false
+			} else {
+				p.logger.Debug(p.PrettyLog(out))
+			}
+		}
+		os.Setenv("BUILD_NUMBER", old_build_number)
 	}
-	os.Setenv("BUILD_NUMBER", old_build_number)
 	return true
 }
 

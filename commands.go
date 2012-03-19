@@ -7,9 +7,8 @@ import "path/filepath"
 
 import . "source"
 import . "version"
-import . "pkg"
 
-func (app *App) buildLocalPackage() *Package {
+func (app *App) buildLocalPackage() (string, string) {
 	wd, _ := os.Getwd()
 	name := filepath.Base(wd)
 	if app.pkgname != "" {
@@ -21,21 +20,21 @@ func (app *App) buildLocalPackage() *Package {
 		app.Fatal("Failed to get parent folder")
 	}
 
-	return app.NewPackage(name, nil, NewSource(abspath))
+	return name, abspath
 }
 
 func (app *App) build() {
-	p := app.buildLocalPackage()
+	name, path := app.buildLocalPackage()
+	p := app.NewPackage(name, nil, NewSource(path))
 	app.Debug(p)
 	p.Install(app.opts)
 	return
 }
 
 func (app *App) test() {
-	p := app.buildLocalPackage()
+	name, path := app.buildLocalPackage()
+	p := app.NewPackage(name, nil, NewSource(path))
 	app.Debug(p)
-	app.opts.Test = true
-	app.opts.Install = false
 	p.Install(app.opts)
 	return
 }
@@ -93,8 +92,18 @@ func (app *App) packageWithLogging(name string) (string, *Version) {
 
 func (app *App) doc() {
 	name := app.readCommand()
-	pkgname, version := app.packageWithLogging(name)
-	app.StartDocServer(pkgname, version)
+	if name == "" {
+		app.Fatal("Please specify package name")
+	}
+	found, version, source := app.FindPackageInSources(name, app.version)
+	if found == false {
+		app.Fatal("Couldn't find", name, app.version, "in any sources")
+	}
+
+	p := app.NewPackage(name, version, source)
+	app.Debug(p)
+	p.Install(app.opts)
+	app.StartDocServer(name)
 }
 
 func (app *App) uninstall() {

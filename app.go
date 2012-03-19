@@ -57,8 +57,17 @@ func (app *App) readArgs() bool {
 		app.fs.BoolVar(&app.opts.Test, "test", true, "Run package tests")
 		app.fs.BoolVar(&app.opts.Install, "install", true, "Install the package")
 	}
+	if app.command == "test" {
+		app.fs.StringVar(&app.pkgname, "pkgname", "", "Name to give package being built. Default is the folder name.")
+		app.fs.BoolVar(&app.opts.Build, "build", true, "Build the package")
+		app.fs.BoolVar(&app.opts.Test, "test", true, "Run package tests")
+		app.fs.BoolVar(&app.opts.Install, "install", false, "Install the package")
+	}
 	if app.command == "doc" {
 		app.fs.StringVar(&app.version, "version", "", "Package version to install")
+		app.fs.BoolVar(&app.opts.Build, "build", false, "Build the package")
+		app.fs.BoolVar(&app.opts.Test, "test", false, "Run package tests")
+		app.fs.BoolVar(&app.opts.Install, "install", false, "Install the package")
 	}
 	err := app.fs.Parse(app.skipCommands())
 	app.Gpkg = NewGpkg(*log_level)

@@ -37,12 +37,12 @@ func (gpkg *Gpkg) EmptyPackages() os.Error {
 	return os.RemoveAll(filepath.Join(gpkg.PkgsetRoot(), "pkg.gvm"))
 }
 
-func (gpkg *Gpkg) StartDocServer(name string, version *Version) {
-	gopath := filepath.Join(gpkg.PkgsetRoot(), "pkg.gvm", name, version.String())
+func (gpkg *Gpkg) StartDocServer(name string) {
+	gopath := filepath.Join(gpkg.tmpdir, name)
 	os.Setenv("GOPATH", gopath)
 	gpkg.Message("Starting documentation server...")
 	gpkg.Debug("GOPATH is", gopath)
-	gpkg.Info("http://localhost:6060/pkg/src/" + name)
+	gpkg.Info("http://localhost:6060/pkg/src")
 	cmd := exec.Command("godoc", "-http", ":6060")
 	cmd.Run()
 }
