@@ -123,7 +123,7 @@ func (p *Package) LoadImports(dir string) bool {
 
 	p.deps = map[string]*Package{}
 
-	p.logger.Debug(" * Loading dependencies for", p.name)
+	p.logger.Info(" * Loading dependencies for", p.name)
 	for name, spec := range p.specs.List {
 		var dep *Package
 		found, version, source := p.gvm.FindPackageInCache(name, spec)
@@ -144,7 +144,7 @@ func (p *Package) LoadImports(dir string) bool {
 		if dep == nil {
 			p.logger.Fatal("ERROR: Couldn't find " + name + " " + spec + " in any sources")
 		}
-		p.logger.Debug("    -", dep.name, dep.version, "(Spec:", spec+")")
+		p.logger.Info("    -", dep.name, dep.version, "(Spec:", spec+")")
 		p.LoadImport(dep, dir)
 	}
 	return true
@@ -183,7 +183,7 @@ func (p *Package) Build() bool {
 	}
 
 	if p.BuildOpts.Build == true {
-		p.logger.Debug(" * Building")
+		p.logger.Info(" * Building")
 
 		os.Setenv("GOPATH", tmp_build_dir+":"+tmp_import_dir)
 
@@ -204,7 +204,7 @@ func (p *Package) Build() bool {
 			p.logger.Error(p.PrettyLog(out))
 			return false
 		} else {
-			p.logger.Debug(p.PrettyLog(out))
+			p.logger.Info(p.PrettyLog(out))
 		}
 		// Install
 		out, berr = p.tool.Install()
@@ -213,18 +213,18 @@ func (p *Package) Build() bool {
 			p.logger.Error(p.PrettyLog(out))
 			return false
 		} else {
-			p.logger.Debug(p.PrettyLog(out))
+			p.logger.Info(p.PrettyLog(out))
 		}
 		if p.BuildOpts.Test == true {
 			// Test
-			p.logger.Debug(" * Testing")
+			p.logger.Info(" * Testing")
 			out, berr = p.tool.Test()
 			if berr != nil {
 				p.logger.Error(berr)
 				p.logger.Error(p.PrettyLog(out))
 				return false
 			} else {
-				p.logger.Debug(p.PrettyLog(out))
+				p.logger.Info(p.PrettyLog(out))
 			}
 		}
 		os.Setenv("BUILD_NUMBER", old_build_number)
@@ -250,7 +250,7 @@ func (p *Package) Install(b BuildOpts) {
 	// INSTALL
 	//////////////////////
 	if p.BuildOpts.Install == true {
-		p.logger.Debug(" * Installing", p.name+"-"+p.version.String()+"...")
+		p.logger.Info(" * Installing", p.name+"-"+p.version.String()+"...")
 		err = os.RemoveAll(filepath.Join(p.root, p.version.String()))
 		if err != nil {
 			p.logger.Fatal("Failed to remove old version")
@@ -270,7 +270,7 @@ func (p *Package) Install(b BuildOpts) {
 		err = FileCopy(filepath.Join(tmp_build_dir, "bin"), filepath.Join(p.root, p.version.String(), "bin"))
 		err = FileCopy(filepath.Join(tmp_build_dir, "bin"), filepath.Join(p.gvm.PkgsetRoot()))
 		if err == nil {
-			p.logger.Debug(" * Installed binaries")
+			p.logger.Info(" * Installed binaries")
 		}
 
 		p.logger.Info("Installed", p.name, p.version.String())
