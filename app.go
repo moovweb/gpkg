@@ -4,7 +4,7 @@ import "flag"
 import . "github.com/moovweb/gpkg/gpkglib"
 import . "github.com/moovweb/gpkg/pkg"
 
-const VERSION = "0.1.21"
+const VERSION = "0.1.22"
 
 type App struct {
 	*Gpkg
