@@ -200,9 +200,9 @@ func (p *Package) Build() bool {
 		// Clean
 		out, berr := p.tool.Clean()
 		if berr != nil {
-			p.logger.Error("Failed to clean")
-			p.logger.Error(p.PrettyLog(out))
-			return false
+			p.logger.Trace(berr)
+			p.logger.Trace(out)
+			//return false
 		}
 		// Build
 		out, berr = p.tool.Build()
