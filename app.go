@@ -43,15 +43,18 @@ func (app *App) skipCommands() []string {
 	return app.args
 }
 
-func (app *App) addBuildFlags(local bool, build bool, test bool, install bool) {
+func (app *App) addBuildFlags(local bool, build bool, test bool, install bool, system bool) {
 	if local == false {
 		app.fs.StringVar(&app.version, "version", "", "Package version to install")
 	} else {
 		app.fs.StringVar(&app.pkgname, "pkgname", "", "Name to give package being built. Default is the folder name.")
 	}
-	app.fs.BoolVar(&app.opts.Build, "build", build, "Build the package")
-	app.fs.BoolVar(&app.opts.Test, "test", test, "Run package tests")
-	app.fs.BoolVar(&app.opts.Install, "install", install, "Install the package")
+	if build == true {
+		app.fs.BoolVar(&app.opts.Build, "build", build, "Build the package")
+		app.fs.BoolVar(&app.opts.Test, "test", test, "Run package tests")
+		app.fs.BoolVar(&app.opts.Install, "install", install, "Install the package")
+		app.fs.BoolVar(&app.opts.UseSystem, "system", system, "Include normal GOPATH during build")
+	}
 }
 
 func (app *App) readArgs() bool {
@@ -59,16 +62,16 @@ func (app *App) readArgs() bool {
 	app.fs = flag.NewFlagSet("gpkg [command]", flag.ContinueOnError)
 	log_level := app.fs.String("log", "info", "Log Level")
 	if app.command == "install" || app.command == "uninstall" {
-		app.addBuildFlags(false, true, true, true)
+		app.addBuildFlags(false, true, true, true, true)
 	}
 	if app.command == "build" {
-		app.addBuildFlags(true, true, true, true)
+		app.addBuildFlags(true, true, true, true, true)
 	}
 	if app.command == "test" {
-		app.addBuildFlags(true, true, true, false)
+		app.addBuildFlags(true, true, true, false, true)
 	}
 	if app.command == "doc" {
-		app.addBuildFlags(false, false, false, false)
+		app.addBuildFlags(false, false, false, false, false)
 	}
 	err := app.fs.Parse(app.skipCommands())
 	app.Gpkg = NewGpkg(*log_level)

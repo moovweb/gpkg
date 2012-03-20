@@ -19,6 +19,7 @@ type BuildOpts struct {
 	Test        bool
 	Install     bool
 	InstallDeps bool
+	UseSystem	bool
 }
 
 type Package struct {
@@ -185,7 +186,12 @@ func (p *Package) Build() bool {
 	if p.BuildOpts.Build == true {
 		p.logger.Info(" * Building")
 
-		os.Setenv("GOPATH", tmp_build_dir+":"+tmp_import_dir)
+		gopath := tmp_build_dir+":"+tmp_import_dir
+		if p.BuildOpts.UseSystem && os.Getenv("GOPATH") != "" {
+			gopath = gopath+":"+os.Getenv("GOPATH")
+		} else {
+		}
+		os.Setenv("GOPATH", gopath)
 
 		old_build_number := os.Getenv("BUILD_NUMBER")
 		os.Setenv("BUILD_NUMBER", p.version.String())
