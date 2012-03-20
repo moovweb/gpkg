@@ -1,6 +1,9 @@
 package source
 
+import "os"
+import "io/ioutil"
 import "path/filepath"
+import "strings"
 
 import . "errors"
 import . "version"
@@ -44,7 +47,18 @@ func (s LocalSource) Clone(name string, version *Version, dest string) Error {
 	return nil
 }
 
-func (s LocalSource) Versions(name string) (list []Version, err Error) {
-	// TODO: This assumes theres a test for NewVersion("0.0.0")!
-	return []Version{*NewVersion("0.0.0")}, nil
+func (s LocalSource) Versions(name string) ([]Version, Error) {
+	_, err := os.Open(filepath.Join(s.root, name))
+	if err == nil {
+		// TODO: This assumes theres a test for NewVersion("0.0.0")!
+		out, err := ioutil.ReadFile(filepath.Join(s.root, name, "VERSION"))
+		if err == nil {
+			v := NewVersion(strings.TrimSpace(string(out)) + ".0")
+			if v != nil {
+				return []Version{*v}, nil
+			}
+		}
+		return []Version{*NewVersion("0.0.0")}, nil
+	}
+	return []Version{}, nil	
 }
