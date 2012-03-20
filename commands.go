@@ -42,6 +42,7 @@ func (app *App) clone() {
 	}
 	wd, _ := os.Getwd()
 	source.Clone(name, version, wd)
+	app.Message("Cloned", name, version)
 	return
 }
 
