@@ -4,7 +4,7 @@ import "flag"
 import . "gpkglib"
 import . "pkg"
 
-const VERSION = "0.1.17"
+const VERSION = "0.1.18"
 
 type App struct {
 	*Gpkg
