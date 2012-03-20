@@ -2,17 +2,18 @@ package tool
 
 import "os"
 import "exec"
+import . "github.com/moovweb/gpkg/errors"
 
 type MakeTool struct {
-	sandbox string
+	sandbox  string
 	filename string
 }
 
 func NewMakeTool(sandbox string, filename string) Tool {
-	return Tool(MakeTool{sandbox:sandbox, filename:filename})
+	return Tool(MakeTool{sandbox: sandbox, filename: filename})
 }
 
-func (m MakeTool) runCommand(cmd string) (string, *ToolError) {
+func (m MakeTool) runCommand(cmd string) (string, Error) {
 	pushd, err := os.Getwd()
 	if err != nil {
 		return "", NewToolError("Failed to get working directory")
@@ -32,19 +33,18 @@ func (m MakeTool) runCommand(cmd string) (string, *ToolError) {
 	return string(out), nil
 }
 
-func (m MakeTool) Clean() (string, *ToolError) {
+func (m MakeTool) Clean() (string, Error) {
 	return m.runCommand("clean")
 }
 
-func (m MakeTool) Build() (string, *ToolError) {
+func (m MakeTool) Build() (string, Error) {
 	return m.runCommand("build")
 }
 
-func (m MakeTool) Test() (string, *ToolError) {
+func (m MakeTool) Test() (string, Error) {
 	return m.runCommand("test")
 }
 
-func (m MakeTool) Install() (string, *ToolError) {
+func (m MakeTool) Install() (string, Error) {
 	return m.runCommand("install")
 }
-

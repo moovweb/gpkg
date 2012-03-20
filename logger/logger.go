@@ -1,12 +1,13 @@
-package main
+package logger
 
 import "fmt"
 import "os"
 import "runtime"
 import "path"
+import "strings"
 
 type Logger struct {
-	name string
+	name  string
 	level int
 }
 
@@ -30,16 +31,34 @@ func NewLogger(name string, level int) *Logger {
 	return &Logger{name: name, level: level}
 }
 
+func LevelFromString(level string) int {
+	switch strings.ToUpper(level) {
+	case "FATAL":
+		return FATAL
+	case "ERROR":
+		return ERROR
+	case "DEBUG":
+		return DEBUG
+	case "INFO":
+		return INFO
+	case "TRACE":
+		return TRACE
+	}
+	return -1
+}
+
 func levelString(level int) string {
 	switch level {
-		case FATAL:
-			return "FATAL"
-		case ERROR:
-			return "ERROR"
-		case DEBUG:
-			return "DEBUG"
-		case INFO:
-			return " INFO"
+	case FATAL:
+		return "FATAL"
+	case ERROR:
+		return "ERROR"
+	case DEBUG:
+		return "DEBUG"
+	case INFO:
+		return " INFO"
+	case TRACE:
+		return "TRACE"
 	}
 	return ""
 }
@@ -54,13 +73,13 @@ func (log *Logger) print(dev *os.File, level int, msg string) {
 
 func (log *Logger) Fatal(msg ...interface{}) {
 	buf := fmt.Sprintln(msg...)
-	log.print(os.Stderr, FATAL, TTYRed + buf + TTYReset)
+	log.print(os.Stderr, FATAL, TTYRed+buf+TTYReset)
 	os.Exit(1)
 }
 
 func (log *Logger) Error(msg ...interface{}) {
 	buf := fmt.Sprintln(msg...)
-	log.print(os.Stderr, ERROR, TTYRed + buf + TTYReset)
+	log.print(os.Stderr, ERROR, TTYRed+buf+TTYReset)
 }
 
 func (log *Logger) Info(msg ...interface{}) {
@@ -70,7 +89,7 @@ func (log *Logger) Info(msg ...interface{}) {
 
 func (log *Logger) Message(msg ...interface{}) {
 	buf := fmt.Sprintln(msg...)
-	log.print(os.Stdout, INFO, TTYGreen + buf + TTYReset)
+	log.print(os.Stdout, INFO, TTYGreen+buf+TTYReset)
 }
 
 func (log *Logger) Debug(msg ...interface{}) {
@@ -78,14 +97,14 @@ func (log *Logger) Debug(msg ...interface{}) {
 	log.print(os.Stdout, DEBUG, buf)
 }
 
-func (log *Logger) Trace(name string, value string, msg ...interface{}) {
+func (log *Logger) Trace(msg ...interface{}) {
 	buf := fmt.Sprintln(msg...)
-	
+
 	pc, file, line, _ := runtime.Caller(1)
 	fnc := runtime.FuncForPC(pc)
-	stacktrace := fmt.Sprintf("%s:%d:%s:%v=%v", path.Base(file), line, fnc.Name(), name, value)
+	stacktrace := fmt.Sprintf("%s:%d:%s", path.Base(file), line, fnc.Name())
 
-	buf = fmt.Sprintf("=== TRACE: %s === %s", stacktrace, buf)
+	buf = fmt.Sprintf("=== TRACE: %s === \n%s===============\n", stacktrace, buf)
 	log.print(os.Stdout, TRACE, buf)
 }
 
@@ -93,4 +112,3 @@ func (log *Logger) Debugf(format string, msg ...interface{}) {
 	buf := fmt.Sprintf(format, msg...)
 	log.print(os.Stdout, DEBUG, buf)
 }
-
