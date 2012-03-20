@@ -5,9 +5,9 @@ import "io/ioutil"
 import "path/filepath"
 import "strings"
 
-import . "errors"
-import . "version"
-import . "util"
+import . "github.com/moovweb/gpkg/errors"
+import . "github.com/moovweb/gpkg/version"
+import . "github.com/moovweb/gpkg/util"
 
 type LocalSource struct {
 	root string

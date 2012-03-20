@@ -3,8 +3,8 @@ package source
 import "path/filepath"
 import "os"
 
-import . "version"
-import . "errors"
+import . "github.com/moovweb/gpkg/version"
+import . "github.com/moovweb/gpkg/errors"
 
 type SourceError struct{ msg string }
 

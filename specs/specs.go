@@ -5,7 +5,7 @@ import "strings"
 import "strconv"
 import "fmt"
 
-import . "source"
+import . "github.com/moovweb/gpkg/source"
 
 type SpecError struct {
 	msg  string

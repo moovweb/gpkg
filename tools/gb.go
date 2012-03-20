@@ -2,7 +2,7 @@ package tool
 
 import "os"
 import "exec"
-import . "errors"
+import . "github.com/moovweb/gpkg/errors"
 
 type GbTool struct {
 	sandbox string
