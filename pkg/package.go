@@ -186,9 +186,10 @@ func (p *Package) Build() bool {
 	if p.BuildOpts.Build == true {
 		p.logger.Info(" * Building")
 
+		old_gopath := os.Getenv("GOPATH")
 		gopath := tmp_build_dir+":"+tmp_import_dir
-		if p.BuildOpts.UseSystem && os.Getenv("GOPATH") != "" {
-			gopath = gopath+":"+os.Getenv("GOPATH")
+		if p.BuildOpts.UseSystem && old_gopath != "" {
+			gopath = gopath+":"+old_gopath
 		} else {
 		}
 		os.Setenv("GOPATH", gopath)
@@ -233,6 +234,8 @@ func (p *Package) Build() bool {
 				p.logger.Info(p.PrettyLog(out))
 			}
 		}
+
+		os.Setenv("GOPATH", old_gopath)
 		os.Setenv("BUILD_NUMBER", old_build_number)
 	}
 	return true
