@@ -31,6 +31,20 @@ func (app *App) build() {
 	return
 }
 
+func (app *App) clone() {
+	name := app.readCommand()
+	if name == "" {
+		app.Fatal("Please specify package name")
+	}
+	found, version, source := app.FindPackageInCache(name, app.version)
+	if found == false {
+		app.Fatal("Couldn't find", name, app.version, "in any sources")
+	}
+	wd, _ := os.Getwd()
+	source.Clone(name, version, wd)
+	return
+}
+
 func (app *App) test() {
 	name, path := app.buildLocalPackage()
 	p := app.NewPackage(name, nil, NewSource(path))

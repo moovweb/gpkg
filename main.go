@@ -39,6 +39,9 @@ func main() {
 	case "doc":
 		app.doc()
 		break
+	case "clone":
+		app.clone()
+		break
 	case "list":
 		app.list()
 		break

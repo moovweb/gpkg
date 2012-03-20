@@ -4,7 +4,7 @@ import "flag"
 import . "gpkglib"
 import . "pkg"
 
-const VERSION = "0.1.19"
+const VERSION = "0.1.20"
 
 type App struct {
 	*Gpkg
@@ -70,6 +70,9 @@ func (app *App) readArgs() bool {
 	if app.command == "test" {
 		app.addBuildFlags(true, true, true, false, true)
 	}
+	if app.command == "clone" {
+		app.addBuildFlags(false, false, false, false, false)
+	}
 	if app.command == "doc" {
 		app.addBuildFlags(false, false, false, false, false)
 	}
@@ -91,6 +94,7 @@ func (app *App) printUsage() {
 	app.Info("  install   - Install a package")
 	app.Info("  uninstall - Uninstall a package")
 	app.Info("  empty     - Clear out all installed packages")
+	app.Info("  clone     - Clone the source from an installed package")
 	app.Info("  build     - Build a package in the current directory")
 	app.Info("  test      - Run tests on the package in the current directory")
 	app.Info("  source    - List/Add/Remove sources for packages")
