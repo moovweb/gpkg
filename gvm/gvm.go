@@ -18,7 +18,7 @@ type Gvm struct {
 	go_root     string
 	pkgset_root string
 	sources     []Source
-	cache       Source
+	cache       PackageSource
 	logger      *Logger
 }
 
