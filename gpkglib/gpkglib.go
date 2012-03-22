@@ -28,8 +28,8 @@ func NewGpkg(loglevel string) *Gpkg {
 	return gpkg
 }
 
-func (gpkg *Gpkg) NewPackage(name string, version *Version, source Source) *Package {
-	p := NewPackage(gpkg.Gvm, name, version, filepath.Join(gpkg.PkgsetRoot(), "pkg.gvm", name), source, gpkg.tmpdir, gpkg.Logger)
+func (gpkg *Gpkg) NewPackageDeprecated(name string, version *Version, source Source) *PackageDeprecated {
+	p := NewPackageDeprecated(gpkg.Gvm, name, version, filepath.Join(gpkg.PkgsetRoot(), "pkg.gvm", name), source, gpkg.tmpdir, gpkg.Logger)
 	return p
 }
 

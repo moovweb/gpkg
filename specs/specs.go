@@ -1,11 +1,13 @@
 package specs
 
 import "io/ioutil"
+import "path/filepath"
 import "strings"
 import "strconv"
 import "fmt"
 
 import . "source"
+import . "errors"
 
 type SpecError struct {
 	msg  string
@@ -13,7 +15,7 @@ type SpecError struct {
 }
 
 func (e *SpecError) String() string                { return "Spec Error: " + e.msg + " line " + strconv.Itoa(e.line) }
-func NewSpecError(msg string, line int) *SpecError { return &SpecError{msg: msg, line: line} }
+func NewSpecError(msg string, line int) Error { return &SpecError{msg: msg, line: line} }
 
 type Specs struct {
 	Source Source
@@ -25,14 +27,14 @@ func NewBlankSpecs(source Source) *Specs {
 	return &Specs{Source: source}
 }
 
-func NewSpecs(pkgfile string) (*Specs, *SpecError) {
+func NewSpecs(path string) (*Specs, Error) {
 	specs := &Specs{}
-
+	pkgfile := filepath.Join(path, "Package.gvm")
 	specs.List = map[string]string{}
 
 	data, err := ioutil.ReadFile(pkgfile)
 	if err != nil {
-		return specs, NewSpecError(err.String(), 0)
+		return nil, nil
 	}
 
 	for n, line := range strings.Split(string(data), "\n") {

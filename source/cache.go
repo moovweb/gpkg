@@ -52,6 +52,16 @@ func (s CacheSource) List() (list []string) {
 	return []string{}
 }
 
+func (s CacheSource) Load(name string, version *Version, dest string) Error {
+	cleanDest(dest, name)
+	err := FileCopy(filepath.Join(s.root, name, version.String(), "pkg"), dest)
+	if err != nil {
+		return NewSourceError(err.String())
+	}
+
+	return nil
+}
+
 func (s CacheSource) Clone(name string, version *Version, dest string) Error {
 	cleanDest(dest, name)
 	err := FileCopy(filepath.Join(s.root, name, version.String(), "src", name), dest)

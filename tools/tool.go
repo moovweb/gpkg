@@ -16,11 +16,11 @@ type Tool interface {
 	Install() (string, Error)
 }
 
-func NewTool(path string) Tool {
+func NewTool(path string) (Tool, Error) {
 	_, err := os.Open(filepath.Join(path, "Makefile.gvm"))
 	if err == nil {
-		return Tool(NewMakeTool(path, "Makefile.gvm"))
+		return Tool(NewMakeTool(path, "Makefile.gvm")), nil
 	}
 
-	return Tool(NewGbTool(path))
+	return Tool(NewGbTool(path)), nil
 }

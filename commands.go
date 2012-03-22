@@ -25,7 +25,7 @@ func (app *App) buildLocalPackage() (string, string) {
 
 func (app *App) build() {
 	name, path := app.buildLocalPackage()
-	p := app.NewPackage(name, nil, NewSource(path))
+	p := app.NewPackageDeprecated(name, nil, NewSource(path))
 	app.Debug(p)
 	p.Install(app.opts)
 	return
@@ -48,7 +48,7 @@ func (app *App) clone() {
 
 func (app *App) test() {
 	name, path := app.buildLocalPackage()
-	p := app.NewPackage(name, nil, NewSource(path))
+	p := app.NewPackageDeprecated(name, nil, NewSource(path))
 	app.Debug(p)
 	p.Install(app.opts)
 	return
@@ -64,7 +64,7 @@ func (app *App) install() {
 		app.Fatal("Couldn't find", name, app.version, "in any sources")
 	}
 
-	p := app.NewPackage(name, version, source)
+	p := app.NewPackageDeprecated(name, version, source)
 	app.Debug(p)
 	p.Install(app.opts)
 }
@@ -110,12 +110,12 @@ func (app *App) doc() {
 	if name == "" {
 		app.Fatal("Please specify package name")
 	}
-	found, version, source := app.FindPackageInSources(name, app.version)
+	found, version, source := app.FindPackageInCache(name, app.version)
 	if found == false {
-		app.Fatal("Couldn't find", name, app.version, "in any sources")
+		app.Fatal(name, app.version, " not installed")
 	}
 
-	p := app.NewPackage(name, version, source)
+	p := app.NewPackageDeprecated(name, version, source)
 	app.Debug(p)
 	p.Install(app.opts)
 	app.StartDocServer(name)

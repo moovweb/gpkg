@@ -4,7 +4,7 @@ import "flag"
 import . "gpkglib"
 import . "pkg"
 
-const VERSION = "0.1.22"
+const VERSION = "0.1.23"
 
 type App struct {
 	*Gpkg
@@ -15,7 +15,7 @@ type App struct {
 
 	pkgname string
 	version string
-	opts    BuildOpts
+	opts    BuildOptsDeprecated
 }
 
 func NewApp(args []string) *App {

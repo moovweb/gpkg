@@ -20,6 +20,7 @@ type Source interface {
 
 type PackageSource interface {
 	Source
+	Load(string, *Version, string) Error
 	Delete(string, *Version) Error
 }
 
