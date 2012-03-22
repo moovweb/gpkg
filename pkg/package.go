@@ -6,13 +6,13 @@ import "path/filepath"
 import "strings"
 import "fmt"
 
-import . "github.com/moovweb/gpkg/gvm"
-import . "github.com/moovweb/gpkg/logger"
-import . "github.com/moovweb/gpkg/source"
-import . "github.com/moovweb/gpkg/version"
-import . "github.com/moovweb/gpkg/specs"
-import . "github.com/moovweb/gpkg/tools"
-import . "github.com/moovweb/gpkg/util"
+import . "gvm"
+import . "logger"
+import . "source"
+import . "version"
+import . "specs"
+import . "tools"
+import . "util"
 
 type BuildOpts struct {
 	Build       bool

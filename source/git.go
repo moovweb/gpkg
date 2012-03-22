@@ -6,8 +6,8 @@ import "fmt"
 import "os"
 import "path/filepath"
 
-import . "github.com/moovweb/gpkg/errors"
-import . "github.com/moovweb/gpkg/version"
+import . "errors"
+import . "version"
 
 type GitSource struct {
 	root string

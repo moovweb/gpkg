@@ -5,8 +5,8 @@ import "path/filepath"
 //import "io/ioutil"
 //import "strings"
 
-import . "github.com/moovweb/gpkg/source"
-import . "github.com/moovweb/gpkg/version"
+import . "source"
+import . "version"
 
 func (app *App) buildLocalPackage() (string, string) {
 	wd, _ := os.Getwd()

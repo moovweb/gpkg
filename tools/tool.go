@@ -2,7 +2,7 @@ package tool
 
 import "os"
 import "path/filepath"
-import . "github.com/moovweb/gpkg/errors"
+import . "errors"
 
 type ToolError struct{ msg string }
 

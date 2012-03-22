@@ -1,7 +1,7 @@
 package tool
 
 import "testing"
-import . "github.com/moovweb/gpkg/errors"
+import . "errors"
 
 const TEST_TOOL_PROJECT_GB = "testdata/gb_project"
 const TEST_TOOL_PROJECT_MAKE = "testdata/make_project"

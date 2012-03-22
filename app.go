@@ -1,8 +1,8 @@
 package main
 
 import "flag"
-import . "github.com/moovweb/gpkg/gpkglib"
-import . "github.com/moovweb/gpkg/pkg"
+import . "gpkglib"
+import . "pkg"
 
 const VERSION = "0.1.22"
 

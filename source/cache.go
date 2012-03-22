@@ -5,9 +5,9 @@ import "strings"
 import "os"
 import "path/filepath"
 
-import . "github.com/moovweb/gpkg/util"
-import . "github.com/moovweb/gpkg/errors"
-import . "github.com/moovweb/gpkg/version"
+import . "util"
+import . "errors"
+import . "version"
 
 type CacheSource struct {
 	root string

@@ -3,7 +3,7 @@ package tool
 import "os"
 import "exec"
 import "path/filepath"
-import . "github.com/moovweb/gpkg/errors"
+import . "errors"
 
 type GoinstallTool struct {
 	gopath string

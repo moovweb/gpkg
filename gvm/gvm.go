@@ -5,10 +5,10 @@ import "io/ioutil"
 import "path/filepath"
 import "strings"
 
-import . "github.com/moovweb/gpkg/version"
+import . "version"
 
-import . "github.com/moovweb/gpkg/logger"
-import . "github.com/moovweb/gpkg/source"
+import . "logger"
+import . "source"
 
 type Gvm struct {
 	go_name     string
