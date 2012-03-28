@@ -3,8 +3,8 @@ package builder
 import "testing"
 import "fmt"
 
-import . "container"
-import . "source"
+import . "github.com/moovweb/gpkg/container"
+import . "github.com/moovweb/gpkg/source"
 
 func testBuilder(name string, version string, t *testing.T) *Builder {
 	s := NewSources("/tmp/gpkg-builder-test/pkg.gvm", "")

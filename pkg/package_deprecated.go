@@ -6,14 +6,14 @@ import "path/filepath"
 import "strings"
 import "fmt"
 
-import . "gvm"
-import . "logger"
-import . "source"
-import . "version"
-import . "specs"
-import . "tools"
-import . "util"
-import . "container"
+import . "github.com/moovweb/gpkg/gvm"
+import . "github.com/moovweb/gpkg/logger"
+import . "github.com/moovweb/gpkg/source"
+import . "github.com/moovweb/gpkg/version"
+import . "github.com/moovweb/gpkg/specs"
+import . "github.com/moovweb/gpkg/tools"
+import . "github.com/moovweb/gpkg/util"
+import . "github.com/moovweb/gpkg/container"
 
 type BuildOptsDeprecated struct {
 	Build       bool

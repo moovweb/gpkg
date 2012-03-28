@@ -7,11 +7,11 @@ import "strings"
 import "strconv"
 import "os/exec"
 
-import . "logger"
-import . "gvm"
-import . "pkg"
-import . "source"
-import . "version"
+import . "github.com/moovweb/gpkg/logger"
+import . "github.com/moovweb/gpkg/gvm"
+import . "github.com/moovweb/gpkg/pkg"
+import . "github.com/moovweb/gpkg/source"
+import . "github.com/moovweb/gpkg/version"
 
 type Gpkg struct {
 	*Gvm

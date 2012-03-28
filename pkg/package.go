@@ -2,10 +2,10 @@ package pkg
 
 import "path/filepath"
 
-import . "source"
-import . "container"
-import . "version"
-import . "tools"
+import . "github.com/moovweb/gpkg/source"
+import . "github.com/moovweb/gpkg/container"
+import . "github.com/moovweb/gpkg/version"
+import . "github.com/moovweb/gpkg/tools"
 
 type Package struct {
 	Source

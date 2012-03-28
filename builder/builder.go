@@ -5,11 +5,11 @@ import "fmt"
 import "path/filepath"
 import "errors"
 
-import . "container"
-import . "pkg"
-import . "specs"
-import . "source"
-import . "util"
+import . "github.com/moovweb/gpkg/container"
+import . "github.com/moovweb/gpkg/pkg"
+import . "github.com/moovweb/gpkg/specs"
+import . "github.com/moovweb/gpkg/source"
+import . "github.com/moovweb/gpkg/util"
 
 type Builder struct {
 	status  int
