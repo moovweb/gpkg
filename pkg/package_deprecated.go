@@ -20,7 +20,7 @@ type BuildOptsDeprecated struct {
 	Test        bool
 	Install     bool
 	InstallDeps bool
-	UseSystem	bool
+	UseSystem   bool
 }
 
 type PackageDeprecated struct {
@@ -143,7 +143,7 @@ func (p *PackageDeprecated) LoadImports(dir string) bool {
 				dep.root = filepath.Join(p.gvm.PkgsetRoot(), "pkg.gvm", name, version.String())
 			}
 		} else {
-			p.logger.Fatal("ERROR: Package", name , spec, "not found locally and install=false")
+			p.logger.Fatal("ERROR: Package", name, spec, "not found locally and install=false")
 		}
 
 		if dep == nil {
@@ -191,9 +191,9 @@ func (p *PackageDeprecated) Build() bool {
 		p.logger.Info(" * Building")
 
 		old_gopath := os.Getenv("GOPATH")
-		gopath := tmp_build_dir+":"+tmp_import_dir
+		gopath := tmp_build_dir + ":" + tmp_import_dir
 		if p.BuildOptsDeprecated.UseSystem && old_gopath != "" {
-			gopath = gopath+":"+old_gopath
+			gopath = gopath + ":" + old_gopath
 		} else {
 		}
 		os.Setenv("GOPATH", gopath)

@@ -7,7 +7,7 @@ import . "version"
 import . "errors"
 
 type Sources struct {
-	cache PackageSource
+	cache   PackageSource
 	sources map[string]Source
 }
 

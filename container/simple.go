@@ -37,11 +37,17 @@ func (c SimpleContainer) Empty() Error {
 
 	// TODO: Do the right thing here!
 	err = os.MkdirAll(c.root, 0775)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 	err = os.MkdirAll(c.SrcDir(), 0775)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 	err = os.MkdirAll(c.PkgDir(), 0775)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 	err = os.MkdirAll(c.BinDir(), 0775)
 	return err
 }

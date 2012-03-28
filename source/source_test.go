@@ -18,17 +18,17 @@ var SourceCloneTests = map[string]string{
 func TestNewSource(t *testing.T) {
 	s := NewSource("/tmp/blah")
 	switch v := s.(type) {
-		case LocalSource:
-			break
-		default:
-			t.Fatal("Unexpected type for /tmp/blah")
+	case LocalSource:
+		break
+	default:
+		t.Fatal("Unexpected type for /tmp/blah")
 	}
 	s = NewSource("git@github.com:tmp/blah")
 	switch v := s.(type) {
-		case GitSource:
-			break
-		default:
-			t.Fatal("Unexpected type for git@github.com:tmp/blah")
+	case GitSource:
+		break
+	default:
+		t.Fatal("Unexpected type for git@github.com:tmp/blah")
 	}
 }
 
@@ -57,4 +57,3 @@ func TestSourceCloneTests(t *testing.T) {
 		testSourceClone(source, repo, t)
 	}
 }
-

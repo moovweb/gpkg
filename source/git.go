@@ -76,4 +76,3 @@ func (s GitSource) Versions(name string) (list []Version, err Error) {
 	}
 	return versions[0:index], nil
 }
-

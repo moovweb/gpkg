@@ -60,5 +60,5 @@ func (s LocalSource) Versions(name string) ([]Version, Error) {
 		}
 		return []Version{*NewVersion("0.0.0")}, nil
 	}
-	return []Version{}, nil	
+	return []Version{}, nil
 }

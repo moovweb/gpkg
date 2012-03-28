@@ -14,7 +14,7 @@ type SpecError struct {
 	line int
 }
 
-func (e *SpecError) String() string                { return "Spec Error: " + e.msg + " line " + strconv.Itoa(e.line) }
+func (e *SpecError) String() string           { return "Spec Error: " + e.msg + " line " + strconv.Itoa(e.line) }
 func NewSpecError(msg string, line int) Error { return &SpecError{msg: msg, line: line} }
 
 type Specs struct {

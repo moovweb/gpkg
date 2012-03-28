@@ -9,4 +9,3 @@ type Container interface {
 	BinDir() string
 	Empty() Error
 }
-

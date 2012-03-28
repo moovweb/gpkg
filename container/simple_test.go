@@ -9,4 +9,3 @@ func TestNewSimpleContainer(t *testing.T) {
 		t.Fatal(err)
 	}
 }
-

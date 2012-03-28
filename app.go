@@ -104,4 +104,3 @@ func (app *App) printUsage() {
 func (app *App) Close() {
 	app.Gpkg.Close()
 }
-

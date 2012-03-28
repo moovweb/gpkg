@@ -42,4 +42,3 @@ func cleanDest(dest string, name string) Error {
 	}
 	return nil
 }
-

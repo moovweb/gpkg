@@ -89,4 +89,3 @@ func (s CacheSource) Versions(name string) (list []Version, err Error) {
 	}
 	return []Version{}, NewSourceError(oserr.String())
 }
-

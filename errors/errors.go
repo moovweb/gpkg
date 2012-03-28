@@ -1,3 +1,5 @@
 package errors
 
-type Error interface { String() string }
+type Error interface {
+	String() string
+}

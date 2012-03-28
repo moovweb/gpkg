@@ -17,8 +17,8 @@ type Package struct {
 
 func NewPackage(name string, version *Version, source Source) *Package {
 	p := &Package{
-		Source: source,
-		Name: name,
+		Source:  source,
+		Name:    name,
 		version: version,
 	}
 	return p

@@ -54,4 +54,3 @@ func TestAdvanced(t *testing.T) {
 	b := testBuilder("nosaka", "0.0.204", t)
 	testInstall(b, NewSimpleContainer("/tmp/gpkg-builder-test/pkg.gvm/nosaka/0.0.204"), t)
 }
-

@@ -12,34 +12,34 @@ import . "source"
 import . "util"
 
 type Builder struct {
-	status	int
+	status  int
 	sources *Sources
-	pkg 	*Package
+	pkg     *Package
 	specs   *Specs
 	deps    map[string]*Package
 
-	build_container Container
+	build_container  Container
 	import_container Container
 	source_container Container
 }
 
 const (
-    INITIAL = iota
-	CLONED		// Cloned source state unknown
-	CLEAN		// Clean source is clean
-	READY		// Dependencies loaded
-	BUILT		// Built and ready for testing or install
-	TESTED		// Built and tested ready for install
-	INSTALLED	// Installed into the local gpkg pkgset
-	ERROR		// Something went wrong :(
+	INITIAL   = iota
+	CLONED    // Cloned source state unknown
+	CLEAN     // Clean source is clean
+	READY     // Dependencies loaded
+	BUILT     // Built and ready for testing or install
+	TESTED    // Built and tested ready for install
+	INSTALLED // Installed into the local gpkg pkgset
+	ERROR     // Something went wrong :(
 )
 
 func NewBuilder(sources *Sources, name string, spec string, tmpdir string) *Builder {
 	b := &Builder{
-		sources: sources,
-		status: INITIAL,
-		deps: map[string]*Package{},
-		build_container: NewSimpleContainer(filepath.Join(tmpdir, "build")),
+		sources:          sources,
+		status:           INITIAL,
+		deps:             map[string]*Package{},
+		build_container:  NewSimpleContainer(filepath.Join(tmpdir, "build")),
 		import_container: NewSimpleContainer(filepath.Join(tmpdir, "import")),
 		source_container: NewSimpleContainer(tmpdir),
 	}
@@ -56,7 +56,7 @@ func pushGopath(path string, preserve bool) string {
 	old_gopath := os.Getenv("GOPATH")
 	gopath := path
 	if preserve == true && old_gopath != "" {
-		gopath = gopath+":"+old_gopath
+		gopath = gopath + ":" + old_gopath
 	} else {
 	}
 	os.Setenv("GOPATH", gopath)
