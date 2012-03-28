@@ -1,8 +1,7 @@
 package tool
 
 import "os"
-import "exec"
-import . "errors"
+import "os/exec"
 
 type MakeTool struct {
 	sandbox  string
@@ -13,7 +12,7 @@ func NewMakeTool(sandbox string, filename string) Tool {
 	return Tool(MakeTool{sandbox: sandbox, filename: filename})
 }
 
-func (m MakeTool) runCommand(cmd string) (string, Error) {
+func (m MakeTool) runCommand(cmd string) (string, error) {
 	pushd, err := os.Getwd()
 	if err != nil {
 		return "", NewToolError("Failed to get working directory")
@@ -24,7 +23,7 @@ func (m MakeTool) runCommand(cmd string) (string, Error) {
 	}
 	out, err := exec.Command("make", "-f", m.filename, cmd).CombinedOutput()
 	if err != nil {
-		return "", NewToolError(err.String() + string(out))
+		return "", NewToolError(err.Error() + string(out))
 	}
 	err = os.Chdir(pushd)
 	if err != nil {
@@ -33,18 +32,18 @@ func (m MakeTool) runCommand(cmd string) (string, Error) {
 	return string(out), nil
 }
 
-func (m MakeTool) Clean() (string, Error) {
+func (m MakeTool) Clean() (string, error) {
 	return m.runCommand("clean")
 }
 
-func (m MakeTool) Build() (string, Error) {
+func (m MakeTool) Build() (string, error) {
 	return m.runCommand("build")
 }
 
-func (m MakeTool) Test() (string, Error) {
+func (m MakeTool) Test() (string, error) {
 	return m.runCommand("test")
 }
 
-func (m MakeTool) Install() (string, Error) {
+func (m MakeTool) Install() (string, error) {
 	return m.runCommand("install")
 }

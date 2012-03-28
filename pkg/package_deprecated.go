@@ -58,7 +58,7 @@ func (p *PackageDeprecated) String() string {
 		fmt.Sprintln(" tmpdir:", p.tmpdir)
 }
 
-func (p *PackageDeprecated) Clone() os.Error {
+func (p *PackageDeprecated) Clone() error {
 	p.logger.Info("Downloading", p.name, p.version)
 	source_container := NewSimpleContainer(filepath.Join(p.tmpdir, p.name))
 	err := p.Source.Clone(p.name, p.version, source_container.SrcDir())
@@ -104,11 +104,11 @@ func (p *PackageDeprecated) LoadImport(dep *PackageDeprecated, dir string) {
 	os.MkdirAll(dir, 0775)
 	err := FileCopy(filepath.Join(dep.root, "pkg"), dir)
 	if err != nil {
-		p.logger.Fatal("ERROR: Couldn't load import lib: " + dep.name + "\n" + err.String())
+		p.logger.Fatal("ERROR: Couldn't load import lib: " + dep.name + "\n" + err.Error())
 	}
 	err = FileCopy(filepath.Join(dep.root, "src", dep.name), filepath.Join(dir, "..", "src"))
 	if err != nil {
-		p.logger.Fatal("ERROR: Couldn't load import src: " + dep.name + "\n" + err.String())
+		p.logger.Fatal("ERROR: Couldn't load import src: " + dep.name + "\n" + err.Error())
 	}
 }
 
@@ -277,7 +277,7 @@ func (p *PackageDeprecated) Install(b BuildOptsDeprecated) {
 
 		err = FileCopy(build_container.PkgDir(), install_container.String())
 		if err != nil {
-			p.logger.Fatal("Failed to copy libraries to install folder\n", err.String())
+			p.logger.Fatal("Failed to copy libraries to install folder\n", err.Error())
 		}
 
 		err = FileCopy(build_container.BinDir(), install_container.BinDir())

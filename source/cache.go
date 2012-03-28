@@ -1,12 +1,11 @@
 package source
 
-import "exec"
+import "os/exec"
 import "strings"
 import "os"
 import "path/filepath"
 
 import . "util"
-import . "errors"
 import . "version"
 
 type CacheSource struct {
@@ -22,12 +21,12 @@ func (s CacheSource) String() string {
 	return s.root
 }
 
-func (s CacheSource) Delete(name string, version *Version) Error {
+func (s CacheSource) Delete(name string, version *Version) error {
 	err := os.RemoveAll(filepath.Join(s.root, name, version.String()))
 	if err == nil {
 		list, err := s.Versions(name)
 		if err != nil {
-			return NewSourceError("Failed to check if for other versions\n" + err.String())
+			return NewSourceError("Failed to check if for other versions\n" + err.Error())
 		} else if len(list) == 0 {
 			err := os.RemoveAll(filepath.Join(s.root, name))
 			if err != nil {
@@ -52,27 +51,27 @@ func (s CacheSource) List() (list []string) {
 	return []string{}
 }
 
-func (s CacheSource) Load(name string, version *Version, dest string) Error {
+func (s CacheSource) Load(name string, version *Version, dest string) error {
 	cleanDest(dest, name)
 	err := FileCopy(filepath.Join(s.root, name, version.String(), "pkg"), dest)
 	if err != nil {
-		return NewSourceError(err.String())
+		return NewSourceError(err.Error())
 	}
 
 	return nil
 }
 
-func (s CacheSource) Clone(name string, version *Version, dest string) Error {
+func (s CacheSource) Clone(name string, version *Version, dest string) error {
 	cleanDest(dest, name)
 	err := FileCopy(filepath.Join(s.root, name, version.String(), "src", name), dest)
 	if err != nil {
-		return NewSourceError(err.String())
+		return NewSourceError(err.Error())
 	}
 
 	return nil
 }
 
-func (s CacheSource) Versions(name string) (list []Version, err Error) {
+func (s CacheSource) Versions(name string) (list []Version, err error) {
 	out, oserr := exec.Command("ls", filepath.Join(s.root, name)).CombinedOutput()
 	if err == nil {
 		versions := strings.Split(string(out), "\n")
@@ -87,5 +86,5 @@ func (s CacheSource) Versions(name string) (list []Version, err Error) {
 		}
 		return list, nil
 	}
-	return []Version{}, NewSourceError(oserr.String())
+	return []Version{}, NewSourceError(oserr.Error())
 }

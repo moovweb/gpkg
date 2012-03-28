@@ -3,8 +3,8 @@ package builder
 import "os"
 import "fmt"
 import "path/filepath"
+import "errors"
 
-import . "errors"
 import . "container"
 import . "pkg"
 import . "specs"
@@ -63,21 +63,21 @@ func pushGopath(path string, preserve bool) string {
 	return old_gopath
 }
 
-func (b *Builder) LoadImports() Error {
+func (b *Builder) LoadImports() error {
 	for name, spec := range b.specs.List {
 		f, v, source := b.sources.FindInCache(name, spec)
 		if f == true {
 			b.sources.LoadFromCache(name, v, b.import_container.String())
 		} else {
 			//newbuilder := NewBuilder(b.sources, name, spec, source_container.String())
-			return os.NewError("Couldn't find package in cache")
+			return errors.New("Couldn't find package in cache")
 		}
 		fmt.Println(f, v, source)
 	}
 	return nil
 }
 
-func (b *Builder) Clone() Error {
+func (b *Builder) Clone() error {
 	err := b.pkg.Clone(b.source_container)
 	if err == nil {
 		b.status = CLONED
@@ -99,7 +99,7 @@ func (b *Builder) Clone() Error {
 	return err
 }
 
-func (b *Builder) Clean() (string, Error) {
+func (b *Builder) Clean() (string, error) {
 	out, err := b.pkg.Clean()
 	if err == nil {
 		b.status = CLEAN
@@ -109,7 +109,7 @@ func (b *Builder) Clean() (string, Error) {
 	return out, err
 }
 
-func (b *Builder) Build() (string, Error) {
+func (b *Builder) Build() (string, error) {
 	err := b.LoadImports()
 	if err != nil {
 		return "", err
@@ -127,11 +127,11 @@ func (b *Builder) Build() (string, Error) {
 	return out, err
 }
 
-func (b *Builder) Test() Error {
+func (b *Builder) Test() error {
 	return nil
 }
 
-func (b *Builder) Install(dest Container) (string, Error) {
+func (b *Builder) Install(dest Container) (string, error) {
 	gopath := pushGopath(dest.String(), false)
 	pushGopath(b.import_container.String(), true)
 	out, err := b.pkg.Install()

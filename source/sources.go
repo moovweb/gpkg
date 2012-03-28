@@ -4,7 +4,6 @@ import "io/ioutil"
 import "strings"
 
 import . "version"
-import . "errors"
 
 type Sources struct {
 	cache   PackageSource
@@ -40,12 +39,12 @@ func (s *Sources) findSource(name string) (bool, []Version, Source) {
 	return false, nil, nil
 }
 
-func (s *Sources) Add(source string) Error {
+func (s *Sources) Add(source string) error {
 	s.sources[source] = NewSource(source)
 	return nil
 }
 
-func (s *Sources) LoadFromCache(name string, version *Version, dest string) Error {
+func (s *Sources) LoadFromCache(name string, version *Version, dest string) error {
 	return s.cache.Load(name, version, dest)
 }
 

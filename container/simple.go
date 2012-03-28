@@ -3,8 +3,6 @@ package container
 import "path/filepath"
 import "os"
 
-import . "errors"
-
 type SimpleContainer struct {
 	root string
 }
@@ -29,7 +27,7 @@ func (c SimpleContainer) BinDir() string {
 	return filepath.Join(c.root, "bin")
 }
 
-func (c SimpleContainer) Empty() Error {
+func (c SimpleContainer) Empty() error {
 	err := os.RemoveAll(c.root)
 	if err != nil {
 		return err

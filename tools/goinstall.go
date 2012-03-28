@@ -1,9 +1,8 @@
 package tool
 
 import "os"
-import "exec"
+import "os/exec"
 import "path/filepath"
-import . "errors"
 
 type GoinstallTool struct {
 	gopath string
@@ -18,11 +17,11 @@ func NewGoinstallTool(gopath string, target string) Tool {
 	return Tool(GoinstallTool{gopath: gopath, target: target})
 }
 
-func (g GoinstallTool) Clean() (string, Error) {
+func (g GoinstallTool) Clean() (string, error) {
 	return "", nil
 }
 
-func (g GoinstallTool) Build() (string, Error) {
+func (g GoinstallTool) Build() (string, error) {
 	pushd := os.Getenv("GOPATH")
 	os.Setenv("GOPATH", g.gopath)
 	out, err := exec.Command("goinstall", g.target).CombinedOutput()
@@ -33,10 +32,10 @@ func (g GoinstallTool) Build() (string, Error) {
 	return string(out), nil
 }
 
-func (g GoinstallTool) Test() (string, Error) {
+func (g GoinstallTool) Test() (string, error) {
 	return "", nil
 }
 
-func (g GoinstallTool) Install() (string, Error) {
+func (g GoinstallTool) Install() (string, error) {
 	return "", nil
 }

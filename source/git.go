@@ -1,12 +1,11 @@
 package source
 
-import "exec"
+import "os/exec"
 import "strings"
 import "fmt"
 import "os"
 import "path/filepath"
 
-import . "errors"
 import . "version"
 
 type GitSource struct {
@@ -24,7 +23,7 @@ func (s GitSource) String() string {
 	return s.root
 }
 
-func (s GitSource) Delete(name string, version *Version) Error {
+func (s GitSource) Delete(name string, version *Version) error {
 	panic("Not implemented!")
 }
 
@@ -33,13 +32,13 @@ func (s GitSource) List() []string {
 	return []string{}
 }
 
-func (s GitSource) Clone(name string, version *Version, dest string) Error {
+func (s GitSource) Clone(name string, version *Version, dest string) error {
 	cleanDest(dest, name)
 	src_repo := s.root + "/" + name + ".git"
 	dest_dir := filepath.Join(dest, name)
 	out, err := exec.Command("git", "clone", src_repo, dest_dir).CombinedOutput()
 	if err != nil {
-		return NewSourceError(err.String() + "\n" + string(out))
+		return NewSourceError(err.Error() + "\n" + string(out))
 	}
 	if version != nil {
 		err := os.Chdir(dest_dir)
@@ -54,10 +53,10 @@ func (s GitSource) Clone(name string, version *Version, dest string) Error {
 	return nil
 }
 
-func (s GitSource) Versions(name string) (list []Version, err Error) {
+func (s GitSource) Versions(name string) (list []Version, err error) {
 	out, oserr := exec.Command("git", "ls-remote", s.root+"/"+name).CombinedOutput()
 	if oserr != nil {
-		return nil, NewSourceError(oserr.String())
+		return nil, NewSourceError(oserr.Error())
 	}
 	lines := strings.Split(string(out), "\n")
 	versions := make([]Version, len(lines))

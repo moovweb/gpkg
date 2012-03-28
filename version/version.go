@@ -56,7 +56,7 @@ func (v *Version) Match(spec string) (bool, *VersionError) {
 	}
 	match, err := v.Matches(spec)
 	if err != nil {
-		return false, NewVersionError(err.String())
+		return false, NewVersionError(err.Error())
 	}
 
 	if match == false {

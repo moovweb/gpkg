@@ -7,15 +7,14 @@ import "strconv"
 import "fmt"
 
 import . "source"
-import . "errors"
 
 type SpecError struct {
 	msg  string
 	line int
 }
 
-func (e *SpecError) String() string           { return "Spec Error: " + e.msg + " line " + strconv.Itoa(e.line) }
-func NewSpecError(msg string, line int) Error { return &SpecError{msg: msg, line: line} }
+func (e *SpecError) Error() string           { return "Spec Error: " + e.msg + " line " + strconv.Itoa(e.line) }
+func NewSpecError(msg string, line int) error { return &SpecError{msg: msg, line: line} }
 
 type Specs struct {
 	Source Source
@@ -27,7 +26,7 @@ func NewBlankSpecs(source Source) *Specs {
 	return &Specs{Source: source}
 }
 
-func NewSpecs(path string) (*Specs, Error) {
+func NewSpecs(path string) (*Specs, error) {
 	specs := &Specs{}
 	pkgfile := filepath.Join(path, "Package.gvm")
 	specs.List = map[string]string{}

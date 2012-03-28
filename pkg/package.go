@@ -5,7 +5,6 @@ import "path/filepath"
 import . "source"
 import . "container"
 import . "version"
-import . "errors"
 import . "tools"
 
 type Package struct {
@@ -24,7 +23,7 @@ func NewPackage(name string, version *Version, source Source) *Package {
 	return p
 }
 
-func (p *Package) Clone(c Container) Error {
+func (p *Package) Clone(c Container) error {
 	err := p.Source.Clone(p.Name, p.version, c.SrcDir())
 	if err != nil {
 		return err

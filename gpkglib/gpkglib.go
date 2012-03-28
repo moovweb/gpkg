@@ -5,7 +5,7 @@ import "os"
 import "io/ioutil"
 import "strings"
 import "strconv"
-import "exec"
+import "os/exec"
 
 import . "logger"
 import . "gvm"
@@ -33,7 +33,7 @@ func (gpkg *Gpkg) NewPackageDeprecated(name string, version *Version, source Sou
 	return p
 }
 
-func (gpkg *Gpkg) EmptyPackages() os.Error {
+func (gpkg *Gpkg) EmptyPackages() error {
 	return os.RemoveAll(filepath.Join(gpkg.PkgsetRoot(), "pkg.gvm"))
 }
 
