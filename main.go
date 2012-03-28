@@ -5,38 +5,62 @@ package main
 import "os/exec"
 import "os"
 
-func FileCopy(src string, dst string) (err error) {
-	_, err = exec.Command("cp", "-r", src, dst).CombinedOutput()
-	return
-}
-
-func readCommand() string {
-	if len(os.Args) < 2 {
-		return ""
-	}
-	os.Args = os.Args[1:]
-	return os.Args[0]
-}
-
 func main() {
-	command := readCommand()
-	logger := NewLogger("gpkg: ", INFO)
-	gvm := NewGvm(logger)
+	app := NewApp(os.Args)
+	defer app.Close()
+	if app == nil {
+		os.Exit(1)
+	}
 
-	if command == "install" {
-		pkgname := readCommand()
-		if pkgname == "" {
-			logger.Fatal("Please specify package name")
+	switch app.command {
+	case "install":
+		app.install()
+		break
+	case "debug":
+		//logger.Info(gpkg.gvm.FindPackage("manhattan"))
+		return
+		break
+	case "uninstall":
+		app.uninstall()
+		break
+	case "empty":
+		err := app.EmptyPackages()
+		if err != nil {
+			app.Fatal("Failed to delete packages\n", err)
+		} else {
+			app.Message("Packages emptied")
 		}
-		gvm.InstallPackage(pkgname, "0.0.src")
-	} else if command == "list" {
-		pkgs := gvm.PackageList()
-		for _, pkg := range pkgs {
-			logger.Info(pkg.name, "(" + pkg.version + ")")
+		break
+	case "build":
+		app.build()
+		break
+	case "test":
+		app.test()
+		break
+	case "doc":
+		app.doc()
+		break
+	case "clone":
+		app.clone()
+		break
+	case "list":
+		app.list()
+		break
+	case "source":
+		app.source()
+		break
+	case "version":
+		app.Info(VERSION)
+		break
+	default:
+		app.Info("Usage: gpkg [command]")
+		app.Info()
+		app.Info("Commands:")
+		app.printUsage()
+		if app.command != "" {
+			app.Error("\nInvalid command (" + app.command + ")")
 		}
-	} else if command == "graph" {
-		graph()
-	} else {
-		logger.Fatal("Invalid command. Please use: list, install or uninstall")
+		app.Info()
+		break
 	}
 }
