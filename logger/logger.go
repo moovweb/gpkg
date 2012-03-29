@@ -20,9 +20,17 @@ const (
 	TRACE
 )
 
-const TTYGreen = "\x1b[32m"
-const TTYRed = "\x1b[31m"
-const TTYReset = "\x1b[0m"
+var TTYGreen string
+var TTYRed string
+var TTYReset string
+
+func init() {
+	if os.ExpandEnv("$TERM") == "xterm" {
+		TTYGreen = "\x1b[32m"
+		TTYRed = "\x1b[31m"
+		TTYReset = "\x1b[0m"
+	}
+}
 
 func NewLogger(name string, level int) *Logger {
 	/*if len(name) > 6 {
