@@ -1,7 +1,5 @@
 package source
 
-import "os/exec"
-import "strings"
 import "os"
 import "path/filepath"
 import "io/ioutil"
@@ -39,13 +37,11 @@ func (s CacheSource) Delete(name string, version *Version) error {
 }
 
 func (s CacheSource) List() (list []string) {
-	out, err := exec.Command("ls", s.root).CombinedOutput()
+	pkgs, err := ioutil.ReadDir(s.root)
 	if err == nil {
-		pkgs := strings.Split(string(out), "\n")
-		pkgs = pkgs[0 : len(pkgs)-1]
 		list = make([]string, len(pkgs))
 		for n, pkg := range pkgs {
-			list[n] = pkg
+			list[n] = pkg.Name()
 		}
 		return list
 	}
