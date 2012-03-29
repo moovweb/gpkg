@@ -4,6 +4,7 @@ import "os/exec"
 import "strings"
 import "os"
 import "path/filepath"
+import "io/ioutil"
 
 import . "util"
 import . "version"
@@ -72,13 +73,11 @@ func (s CacheSource) Clone(name string, version *Version, dest string) error {
 }
 
 func (s CacheSource) Versions(name string) (list []Version, err error) {
-	out, oserr := exec.Command("ls", filepath.Join(s.root, name)).CombinedOutput()
+	versions, err := ioutil.ReadDir(filepath.Join(s.root, name))
 	if err == nil {
-		versions := strings.Split(string(out), "\n")
-		versions = versions[0 : len(versions)-1]
 		list = make([]Version, len(versions))
 		for n, version_str := range versions {
-			v := NewVersion(version_str)
+			v := NewVersion(version_str.Name())
 			if v == nil {
 				return []Version{}, NewSourceError("Failed to create version for install package!")
 			}
@@ -86,5 +85,5 @@ func (s CacheSource) Versions(name string) (list []Version, err error) {
 		}
 		return list, nil
 	}
-	return []Version{}, NewSourceError(oserr.Error())
+	return []Version{}, NewSourceError(err.Error())
 }
