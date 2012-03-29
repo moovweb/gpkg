@@ -6,8 +6,8 @@ import "path/filepath"
 //import "io/ioutil"
 //import "strings"
 
-import . "source"
-import . "version"
+import . "./source"
+import . "./version"
 
 func (app *App) buildLocalPackage() (string, string) {
 	wd, _ := os.Getwd()

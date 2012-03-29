@@ -4,8 +4,8 @@ import "os"
 import "path/filepath"
 import "io/ioutil"
 
-import . "util"
-import . "version"
+import . "../util"
+import . "../version"
 
 type CacheSource struct {
 	root string

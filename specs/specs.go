@@ -6,7 +6,7 @@ import "strings"
 import "strconv"
 import "fmt"
 
-import . "source"
+import . "../source"
 
 type SpecError struct {
 	msg  string

@@ -5,8 +5,8 @@ import "io/ioutil"
 import "path/filepath"
 import "strings"
 
-import . "version"
-import . "util"
+import . "../version"
+import . "../util"
 
 type LocalSource struct {
 	root string

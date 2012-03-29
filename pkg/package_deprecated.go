@@ -6,14 +6,14 @@ import "path/filepath"
 import "strings"
 import "fmt"
 
-import . "gvm"
-import . "logger"
-import . "source"
-import . "version"
-import . "specs"
-import . "tools"
-import . "util"
-import . "container"
+import . "../gvm"
+import . "../logger"
+import . "../source"
+import . "../version"
+import . "../specs"
+import . "../tools"
+import . "../util"
+import . "../container"
 
 type BuildOptsDeprecated struct {
 	Build       bool

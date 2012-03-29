@@ -3,7 +3,7 @@ package source
 import "io/ioutil"
 import "strings"
 
-import . "version"
+import . "../version"
 
 type Sources struct {
 	cache   PackageSource

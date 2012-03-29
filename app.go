@@ -1,8 +1,8 @@
 package main
 
 import "flag"
-import . "gpkglib"
-import . "pkg"
+import . "./gpkglib"
+import . "./pkg"
 
 const VERSION = "0.1.23"
 

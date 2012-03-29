@@ -5,10 +5,10 @@ import "io/ioutil"
 import "path/filepath"
 import "strings"
 
-import . "version"
+import . "../version"
 
-import . "logger"
-import . "source"
+import . "../logger"
+import . "../source"
 
 type Gvm struct {
 	go_name     string

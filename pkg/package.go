@@ -2,10 +2,10 @@ package pkg
 
 import "path/filepath"
 
-import . "source"
-import . "container"
-import . "version"
-import . "tools"
+import . "../source"
+import . "../container"
+import . "../version"
+import . "../tools"
 
 type Package struct {
 	Source

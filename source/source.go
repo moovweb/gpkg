@@ -3,7 +3,7 @@ package source
 import "path/filepath"
 import "os"
 
-import . "version"
+import . "../version"
 
 type SourceError struct{ msg string }
 
