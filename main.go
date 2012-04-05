@@ -45,6 +45,9 @@ func main() {
 	case "list":
 		app.list()
 		break
+	case "bundle":
+		app.bundle()
+		break
 	case "source":
 		app.source()
 		break

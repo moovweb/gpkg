@@ -33,7 +33,7 @@ type PackageDeprecated struct {
 	tmpdir  string
 	logger  *Logger
 	deps    map[string]*PackageDeprecated
-	specs   *Specs
+	Specs   *Specs
 	tool    Tool
 }
 
@@ -120,16 +120,16 @@ func (p *PackageDeprecated) LoadImports(dir string) bool {
 	}
 	if specs == nil {
 		p.logger.Debug(" * No dependencies found")
-		p.specs = NewBlankSpecs(p.Source)
+		p.Specs = NewBlankSpecs(p.Source)
 		return true
 	} else {
-		p.specs = specs
+		p.Specs = specs
 	}
 
 	p.deps = map[string]*PackageDeprecated{}
 
 	p.logger.Info(" * Loading dependencies for", p.name)
-	for name, spec := range p.specs.List {
+	for name, spec := range p.Specs.List {
 		var dep *PackageDeprecated
 		found, version, source := p.gvm.FindPackageInCache(name, spec)
 		if found == true {
@@ -150,14 +150,15 @@ func (p *PackageDeprecated) LoadImports(dir string) bool {
 			p.logger.Fatal("ERROR: Couldn't find " + name + " " + spec + " in any sources")
 		}
 		p.logger.Info("    -", dep.name, dep.version, "(Spec:", spec+")")
+		p.Specs.List[dep.name] = dep.version.String()
 		p.LoadImport(dep, dir)
 	}
 	return true
 }
 
 func (p *PackageDeprecated) WriteManifest() {
-	p.specs.Origin = p.Source
-	manifest := p.specs.String()
+	p.Specs.Origin = p.Source
+	manifest := p.Specs.String()
 	err := ioutil.WriteFile(filepath.Join(p.root, p.version.String(), "manifest"), []byte(manifest), 0664)
 	if err != nil {
 		p.logger.Fatal("Failed to write manifest file")
