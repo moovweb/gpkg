@@ -76,6 +76,9 @@ func (app *App) readArgs() bool {
 	if app.command == "doc" {
 		app.addBuildFlags(false, false, false, false, false)
 	}
+	if app.command == "bundle" {
+		app.addBuildFlags(false, false, false, false, false)
+	}
 	err := app.fs.Parse(app.skipCommands())
 	app.Gpkg = NewGpkg(*log_level)
 	if err != nil {

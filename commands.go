@@ -2,8 +2,8 @@ package main
 
 import "os"
 import "path/filepath"
+import "io/ioutil"
 
-//import "io/ioutil"
 //import "strings"
 
 import . "./source"
@@ -68,6 +68,18 @@ func (app *App) install() {
 	p := app.NewPackageDeprecated(name, version, source)
 	app.Debug(p)
 	p.Install(app.opts)
+}
+
+func (app *App) bundle() {
+	name, path := app.buildLocalPackage()
+	p := app.NewPackageDeprecated(name, nil, NewSource(path))
+	app.Debug(p)
+	p.Install(app.opts)
+	specs := p.Specs.String()
+	err := ioutil.WriteFile("manifest", []byte(specs), 0644)
+	if err != nil {
+		app.Fatal("Failed to write manifest")
+	}
 }
 
 func (app *App) source() {
