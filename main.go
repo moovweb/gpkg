@@ -3,6 +3,7 @@
 package main
 
 import "os"
+import "runtime"
 
 func main() {
 	app := NewApp(os.Args)
@@ -52,7 +53,8 @@ func main() {
 		app.source()
 		break
 	case "version":
-		app.Info(VERSION)
+		app.Info("gpkg:", VERSION)
+		app.Info("go:", runtime.Version())
 		break
 	default:
 		app.Info("Usage: gpkg [command]")
