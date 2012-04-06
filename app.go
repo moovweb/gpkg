@@ -99,6 +99,7 @@ func (app *App) printUsage() {
 	app.Info("  empty     - Clear out all installed packages")
 	app.Info("  clone     - Clone the source from an installed package")
 	app.Info("  build     - Build a package in the current directory")
+	app.Info("  bundle    - Print manifest of dependent versions")
 	app.Info("  test      - Run tests on the package in the current directory")
 	app.Info("  source    - List/Add/Remove sources for packages")
 	app.Info("  version   - Print the gpkg version")
