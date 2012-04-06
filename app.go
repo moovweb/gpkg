@@ -5,7 +5,7 @@ import "runtime"
 import . "gpkg/gpkglib"
 import . "gpkg/pkg"
 
-const VERSION = "0.1.23"
+const VERSION = "1.0.23"
 
 type App struct {
 	*Gpkg
