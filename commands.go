@@ -1,13 +1,14 @@
 package main
 
 import "os"
+import "os/exec"
 import "path/filepath"
 import "io/ioutil"
 
 //import "strings"
 
-import . "./source"
-import . "./version"
+import . "gpkg/source"
+import . "gpkg/version"
 
 func (app *App) buildLocalPackage() (string, string) {
 	wd, _ := os.Getwd()
@@ -30,6 +31,22 @@ func (app *App) build() {
 	app.Debug(p)
 	p.Install(app.opts)
 	return
+}
+
+func (app *App) goget() {
+	name := app.readCommand()
+	if name == "" {
+		app.Fatal("Please specify package path")
+	}
+
+	os.Setenv("GOOS", app.opts.TargetOS)
+	os.Setenv("GOARCH", app.opts.TargetArch)
+	cmd := exec.Command("go", "get", name)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		app.Fatal("Failed to run go get")
+	}
+	app.Info(string(out))
 }
 
 func (app *App) clone() {

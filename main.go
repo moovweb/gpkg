@@ -34,6 +34,9 @@ func main() {
 	case "build":
 		app.build()
 		break
+	case "goget":
+		app.goget()
+		break
 	case "test":
 		app.test()
 		break

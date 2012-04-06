@@ -5,11 +5,11 @@ import "fmt"
 import "path/filepath"
 import "errors"
 
-import . "container"
-import . "pkg"
-import . "specs"
-import . "source"
-import . "util"
+import . "gpkg/container"
+import . "gpkg/pkg"
+import . "gpkg/specs"
+import . "gpkg/source"
+import . "gpkg/util"
 
 type Builder struct {
 	status  int

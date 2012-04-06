@@ -1,8 +1,9 @@
 package main
 
 import "flag"
-import . "./gpkglib"
-import . "./pkg"
+import "runtime"
+import . "gpkg/gpkglib"
+import . "gpkg/pkg"
 
 const VERSION = "0.1.23"
 
@@ -54,6 +55,8 @@ func (app *App) addBuildFlags(local bool, build bool, test bool, install bool, s
 		app.fs.BoolVar(&app.opts.Test, "test", test, "Run package tests")
 		app.fs.BoolVar(&app.opts.Install, "install", install, "Install the package")
 		app.fs.BoolVar(&app.opts.UseSystem, "system", system, "Include normal GOPATH during build")
+		app.fs.StringVar(&app.opts.TargetOS, "target_os", runtime.GOOS, "Specify the target OS")
+		app.fs.StringVar(&app.opts.TargetArch, "target_arch", runtime.GOARCH, "Specify the target architechure")
 	}
 }
 
@@ -79,6 +82,9 @@ func (app *App) readArgs() bool {
 	if app.command == "bundle" {
 		app.addBuildFlags(false, false, false, false, false)
 	}
+	if app.command == "goget" {
+		app.addBuildFlags(false, true, false, false, false)
+	}
 	err := app.fs.Parse(app.skipCommands())
 	app.Gpkg = NewGpkg(*log_level)
 	if err != nil {
@@ -99,6 +105,7 @@ func (app *App) printUsage() {
 	app.Info("  empty     - Clear out all installed packages")
 	app.Info("  clone     - Clone the source from an installed package")
 	app.Info("  build     - Build a package in the current directory")
+	app.Info("  goget     - Run go get in a gpkg context")
 	app.Info("  bundle    - Print manifest of dependent versions")
 	app.Info("  test      - Run tests on the package in the current directory")
 	app.Info("  source    - List/Add/Remove sources for packages")

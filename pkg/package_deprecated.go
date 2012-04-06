@@ -6,14 +6,14 @@ import "path/filepath"
 import "strings"
 import "fmt"
 
-import . "../gvm"
-import . "../logger"
-import . "../source"
-import . "../version"
-import . "../specs"
-import . "../tools"
-import . "../util"
-import . "../container"
+import . "gpkg/gvm"
+import . "gpkg/logger"
+import . "gpkg/source"
+import . "gpkg/version"
+import . "gpkg/specs"
+import . "gpkg/tools"
+import . "gpkg/util"
+import . "gpkg/container"
 
 type BuildOptsDeprecated struct {
 	Build       bool
@@ -21,6 +21,8 @@ type BuildOptsDeprecated struct {
 	Install     bool
 	InstallDeps bool
 	UseSystem   bool
+	TargetOS	string
+	TargetArch	string
 }
 
 type PackageDeprecated struct {
@@ -60,7 +62,7 @@ func (p *PackageDeprecated) String() string {
 
 func (p *PackageDeprecated) Clone() error {
 	p.logger.Info("Downloading", p.name, p.version)
-	source_container := NewSimpleContainer(filepath.Join(p.tmpdir, p.name))
+	source_container := NewSimpleContainer(filepath.Join(p.tmpdir, p.name, "source"))
 	err := p.Source.Clone(p.name, p.version, source_container.SrcDir())
 	if err != nil {
 		return err
@@ -191,6 +193,9 @@ func (p *PackageDeprecated) Build() bool {
 	if p.BuildOptsDeprecated.Build == true {
 		p.logger.Info(" * Building")
 
+		os.Setenv("GOOS", p.BuildOptsDeprecated.TargetOS)
+		os.Setenv("GOARCH", p.BuildOptsDeprecated.TargetArch)
+
 		old_gopath := os.Getenv("GOPATH")
 		gopath := tmp_build_dir + ":" + tmp_import_dir
 		if p.BuildOptsDeprecated.UseSystem && old_gopath != "" {
@@ -250,7 +255,7 @@ func (p *PackageDeprecated) Install(b BuildOptsDeprecated) {
 	p.BuildOptsDeprecated = b
 
 	build_container := NewSimpleContainer(filepath.Join(p.tmpdir, p.name, "build"))
-	source_container := NewSimpleContainer(filepath.Join(p.tmpdir, p.name))
+	source_container := NewSimpleContainer(filepath.Join(p.tmpdir, p.name, "source"))
 
 	err := p.Clone()
 	if err != nil {
@@ -271,12 +276,12 @@ func (p *PackageDeprecated) Install(b BuildOptsDeprecated) {
 			p.logger.Fatal("Failed to remove old version")
 		}
 		p.WriteManifest()
-		err = FileCopy(source_container.SrcDir(), install_container.String())
+		err = FileCopy(source_container.SrcDir(), install_container.SrcDir())
 		if err != nil {
 			p.logger.Fatal("Failed to copy source to install folder", err)
 		}
 
-		err = FileCopy(build_container.PkgDir(), install_container.String())
+		err = FileCopy(build_container.PkgDir(), install_container.PkgDir())
 		if err != nil {
 			p.logger.Fatal("Failed to copy libraries to install folder\n", err.Error())
 		}

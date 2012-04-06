@@ -6,7 +6,7 @@ import "fmt"
 import "os"
 import "path/filepath"
 
-import . "../version"
+import . "gpkg/version"
 
 type GitSource struct {
 	root string

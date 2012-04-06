@@ -9,11 +9,11 @@ import "strconv"
 import "os/exec"
 import "time"
 
-import . "../logger"
-import . "../gvm"
-import . "../pkg"
-import . "../source"
-import . "../version"
+import . "gpkg/logger"
+import . "gpkg/gvm"
+import . "gpkg/pkg"
+import . "gpkg/source"
+import . "gpkg/version"
 
 type Gpkg struct {
 	*Gvm
