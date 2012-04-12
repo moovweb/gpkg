@@ -1,6 +1,6 @@
 package main
 
-import "exec"
+import "os/exec"
 import "os"
 import "io/ioutil"
 import "path/filepath"
@@ -8,15 +8,15 @@ import "strings"
 import "github.com/moovweb/versions"
 
 type Package struct {
-	gvm *Gvm
-	root string
-	name string
-	tag string
+	gvm     *Gvm
+	root    string
+	name    string
+	tag     string
 	version *versions.Version
-	source string
-	tmpdir string
-	logger *Logger
-	deps map[string]*Package
+	source  string
+	tmpdir  string
+	logger  *Logger
+	deps    map[string]*Package
 
 	force_install bool
 }
@@ -32,7 +32,7 @@ func (p *Package) GetVersions() []string {
 	dirs, _ := ioutil.ReadDir(p.root)
 	versions := make([]string, len(dirs))
 	for n, d := range dirs {
-		versions[n] = d.Name
+		versions[n] = d.Name()
 	}
 	return versions
 }
@@ -74,7 +74,7 @@ func (p *Package) Get() bool {
 		}
 	} else {
 		p.logger.Debug(" * Downloading", p.name)
-		_, err := exec.Command("git", "clone", p.source, tmp_src_dir + "/" + p.name).CombinedOutput()
+		_, err := exec.Command("git", "clone", p.source, tmp_src_dir+"/"+p.name).CombinedOutput()
 		if err != nil {
 			return false
 		}
@@ -114,7 +114,7 @@ func (p *Package) Get() bool {
 				}
 			}
 		}
-	}	
+	}
 
 	return true
 }
@@ -148,11 +148,11 @@ func (p *Package) LoadImports(dir string) bool {
 	tmp_src_dir := filepath.Join(p.tmpdir, p.name, "src")
 	//data, err := ioutil.ReadFile(filepath.Join(tmp_src_dir, p.name, "manifest"))
 	//if err != nil {
-		data, err := ioutil.ReadFile(filepath.Join(tmp_src_dir, p.name, "Package.gvm"))
-		if err != nil {
-			p.logger.Debug(" * No dependencies found")
-			return true
-		}
+	data, err := ioutil.ReadFile(filepath.Join(tmp_src_dir, p.name, "Package.gvm"))
+	if err != nil {
+		p.logger.Debug(" * No dependencies found")
+		return true
+	}
 	//}
 
 	p.deps = make(map[string]*Package, 64)
@@ -180,7 +180,7 @@ func (p *Package) LoadImports(dir string) bool {
 			if dep == nil {
 				p.logger.Fatal("ERROR: Couldn't find " + params[1] + " in any sources")
 			}
-			p.logger.Debug("    -", dep.name, dep.tag, "(Spec:", version_spec + ")")
+			p.logger.Debug("    -", dep.name, dep.tag, "(Spec:", version_spec+")")
 			p.LoadImport(dep, dir)
 		}
 	}
@@ -199,12 +199,12 @@ func (p *Package) WriteManifest() {
 	//p.logger.Debug(" * Wrote manifest to " + filepath.Join(p.root, p.tag, "manifest"))
 }
 
-func (p *Package) PrettyLog(buf[] byte) string {
+func (p *Package) PrettyLog(buf []byte) string {
 	lines := strings.Split(string(buf), "\n")
 	r := ""
 	for n, line := range lines {
 		r += "    : " + line
-		if n != len(lines) - 1 {
+		if n != len(lines)-1 {
 			r += "\n"
 		}
 	}
@@ -224,8 +224,8 @@ func (p *Package) Build() bool {
 	p.logger.Debug(" * Building", p.name, p.tag)
 
 	os.Chdir(filepath.Join(tmp_src_dir, p.name))
-	os.Setenv("GOPATH", tmp_build_dir + ":" + tmp_import_dir)
-	old_build_number := os.Getenv("BUILD_NUMBER")	
+	os.Setenv("GOPATH", tmp_build_dir+":"+tmp_import_dir)
+	old_build_number := os.Getenv("BUILD_NUMBER")
 	os.Setenv("BUILD_NUMBER", p.tag)
 	_, err := os.Open("Makefile.gvm")
 	if err == nil {
@@ -281,7 +281,7 @@ func (p *Package) Build() bool {
 
 	os.Setenv("BUILD_NUMBER", old_build_number)
 
-	p.logger.Debug(" * Installing", p.name + "-" + p.tag + "...")
+	p.logger.Debug(" * Installing", p.name+"-"+p.tag+"...")
 
 	if p.force_install == true {
 		err = os.RemoveAll(filepath.Join(p.root, p.tag))
@@ -293,7 +293,7 @@ func (p *Package) Build() bool {
 		if err == nil {
 			p.logger.Fatal("Already installed!")
 		}
-	}	
+	}
 	os.MkdirAll(filepath.Join(p.root, p.tag), 0775)
 
 	p.WriteManifest()
@@ -324,7 +324,7 @@ func (p *Package) Install(tmpdir string) {
 	if p.source == "" {
 		if !p.FindSource() {
 			if p.tag != "" {
-				p.logger.Fatal("ERROR Couldn't find", p.name, "(" + p.tag + ")", "in any sources")
+				p.logger.Fatal("ERROR Couldn't find", p.name, "("+p.tag+")", "in any sources")
 			}
 			p.logger.Fatal("ERROR Couldn't find", p.name, "in any sources")
 		}

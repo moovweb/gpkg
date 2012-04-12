@@ -1,17 +1,17 @@
 package main
 
-import "exec"
+import "os/exec"
 import "os"
 import "path/filepath"
 import "strconv"
 
 type Gpkg struct {
-	gvm *Gvm
+	gvm    *Gvm
 	logger *Logger
 	tmpdir string
 }
 
-func FileCopy(src string, dst string) (err os.Error) {
+func FileCopy(src string, dst string) (err error) {
 	_, err = exec.Command("cp", "-r", src, dst).CombinedOutput()
 	return
 }
@@ -88,4 +88,3 @@ func main() {
 		gpkg.printUsage()
 	}
 }
-

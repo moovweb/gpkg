@@ -4,17 +4,17 @@ import "os"
 import "io/ioutil"
 import "path/filepath"
 import "strings"
-import "exec"
+import "os/exec"
 import "github.com/moovweb/versions"
 
 type Gvm struct {
-	root string
-	go_name string
-	go_root string
+	root        string
+	go_name     string
+	go_root     string
 	pkgset_name string
 	pkgset_root string
-	sources []*Source
-	logger *Logger
+	sources     []*Source
+	logger      *Logger
 }
 
 func (gvm *Gvm) AddSource(src string) bool {
@@ -34,7 +34,7 @@ func (gvm *Gvm) AddSource(src string) bool {
 	if err != nil {
 		return false
 	}
-	
+
 	gvm.ReadSources()
 	return true
 }
@@ -88,10 +88,10 @@ func (gvm *Gvm) ReadSources() bool {
 
 func (gvm *Gvm) NewPackage(name string, tag string) *Package {
 	p := &Package{
-		gvm: gvm,
+		gvm:    gvm,
 		logger: gvm.logger,
-		name: name,
-		tag: tag,
+		name:   name,
+		tag:    tag,
 	}
 	p.root = filepath.Join(p.gvm.pkgset_root, "pkg.gvm", p.name)
 	return p
@@ -143,9 +143,9 @@ func (gvm *Gvm) FindPackage(name string) *Package {
 			panic("No versions")
 		}
 		for _, dir := range dirs {
-			this_version, err := versions.NewVersion(dir.Name)
+			this_version, err := versions.NewVersion(dir.Name())
 			if err != nil {
-				gvm.logger.Info("bad version1", dir.Name, err)
+				gvm.logger.Info("bad version1", dir.Name(), err)
 				continue
 			}
 			if p != nil {
@@ -159,21 +159,21 @@ func (gvm *Gvm) FindPackage(name string) *Package {
 					gvm.logger.Info("bad match", p.tag, err)
 					continue
 				} else if matched == true {
-					p = gvm.NewPackage(name, dir.Name)
+					p = gvm.NewPackage(name, dir.Name())
 				}
 			} else {
-				p = gvm.NewPackage(name, dir.Name)
+				p = gvm.NewPackage(name, dir.Name())
 			}
 		}
 	}
 	return p
 }
 
-func (gvm *Gvm) PackageList() (pkglist[] *Package) {
+func (gvm *Gvm) PackageList() (pkglist []*Package) {
 	out, err := exec.Command("ls", filepath.Join(gvm.pkgset_root, "pkg.gvm")).CombinedOutput()
 	if err == nil {
 		pkgs := strings.Split(string(out), "\n")
-		pkgs = pkgs[0:len(pkgs)-1]
+		pkgs = pkgs[0 : len(pkgs)-1]
 		pkglist = make([]*Package, len(pkgs))
 		for n, pkg := range pkgs {
 			pkglist[n] = gvm.NewPackage(pkg, "")
@@ -182,4 +182,3 @@ func (gvm *Gvm) PackageList() (pkglist[] *Package) {
 	}
 	return []*Package{}
 }
-

@@ -16,8 +16,8 @@ type Package struct {
 	Imports map[string]string
 }
 
-func filter(file *os.FileInfo) bool {
-	if strings.HasSuffix(file.Name, ".go") && !file.IsDirectory() {
+func filter(file os.FileInfo) bool {
+	if strings.HasSuffix(file.Name(), ".go") && !file.IsDir() {
 		return true
 	}
 	return false
@@ -75,10 +75,10 @@ func (p *Package) parsePackage(path string) {
 		panic("Couldn't parse files")
 	}
 
-	file := fset.Files()
-	for f := range file {
-		p.Imports = readFile(p.Imports, f.Name())
-	}
+	//file := fset.Files()
+	//for f := range file {
+	//	p.Imports = readFile(p.Imports, f.Name())
+	//}
 
 	for pkg_name, _ := range pkg_list {
 		if pkg_name == "main" {
@@ -93,8 +93,8 @@ func (p *Package) parsePackage(path string) {
 	}
 
 	for _, next_dir := range cur_dirs {
-		if next_dir.IsDirectory() && next_dir.Name != ".git" && next_dir.Name != "test" && next_dir.Name != "_obj" && next_dir.Name != "_bin" {
-			p.parsePackage(filepath.Join(path, next_dir.Name))
+		if next_dir.IsDir() && next_dir.Name() != ".git" && next_dir.Name() != "test" && next_dir.Name() != "_obj" && next_dir.Name() != "_bin" {
+			p.parsePackage(filepath.Join(path, next_dir.Name()))
 		}
 	}
 }
